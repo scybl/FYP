@@ -1,0 +1,52 @@
+# 设备设置：cuda 或 cpu
+device: "cuda"  # 如果你有 GPU 并且想使用它，设置为 'cuda'，否则设置为 'cpu'
+model_name: "unetpp"
+save_image_path: "../saved_images"  # 用于保存预测结果的图像路径
+model_path: "../params/"  # 模型权重的保存和加载路径
+
+# 数据加载器参数
+batch_size: 8  # 批次大小
+shuffle: true  # 数据加载时是否打乱顺序
+num_workers: 16
+
+# 训练相关设置
+train_setting:
+  lr: 0.001
+  eta_min: 0.0000006
+
+  t_max: 25
+  epochs: 100  # 总共训练的epoch次数
+  warmup_epochs: 10
+
+  save_interval: 50  # 多少步（batches）保存一次模型权重
+  train_dataset_name: "isic2018" #choose train dataset
+
+  train_dataset:
+    isic2018: # choose the isic data set
+      size: 256
+      dataset_path: "/home/bizare/Desktop/github/FlameWork/LoadData"
+      # must be absolute path from system root
+      train_data_mask: "isic2018/train/mask"
+      train_data_img: "isic2018/train/img"
+
+      img_prefix: "ISIC_"
+      seg_prefix: "ISIC_"
+      img_suffix: ".jpg"
+      seg_suffix: "_segmentation.png"
+
+test_setting:
+  seed: 1234
+  test_dataset_name: "isic2018"
+  test_dataset:
+    isic2018:
+      size: 256
+      dataset_path: "/home/bizare/Desktop/github/FlameWork/LoadData"
+      train_data_mask: "isic2018/test/mask"
+      train_data_img: "isic2018/test/img"
+
+      img_prefix: "ISIC_"
+      seg_prefix: "ISIC_"
+      img_suffix: ".jpg"
+      seg_suffix: "_segmentation.png"
+
+# 输出图像和模型路径
