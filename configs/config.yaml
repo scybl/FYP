@@ -24,7 +24,7 @@ train_setting:
   train_dataset:
     isic2018: # choose the isic data set
       size: 256
-      dataset_path: "/home/bizare/Desktop/github/FlameWork/LoadData"
+      dataset_path: "../LoadData"
       # must be absolute path from system root
       train_data_mask: "isic2018/train/mask"
       train_data_img: "isic2018/train/img"
@@ -40,7 +40,7 @@ test_setting:
   test_dataset:
     isic2018:
       size: 256
-      dataset_path: "/home/bizare/Desktop/github/FlameWork/LoadData"
+      dataset_path: "../LoadData"
       train_data_mask: "isic2018/test/mask"
       train_data_img: "isic2018/test/img"
 

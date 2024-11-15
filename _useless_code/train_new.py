@@ -7,7 +7,7 @@ from pathlib import Path
 from torch import optim
 from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
-from model_defination.model_loader import load_model
+from model_defination.model_loader import load_model_train
 import wandb
 from evaluate import evaluate
 from unet import UNet
@@ -181,7 +181,7 @@ if __name__ == '__main__':
     # Change here to adapt to your data
     # n_channels=3 for RGB images
     # n_classes is the number of probabilities you want to get per pixel
-    model = load_model()
+    model = load_model_train()
     UNet(n_channels=3, n_classes=args.classes, bilinear=args.bilinear)
     model = model.to(memory_format=torch.channels_last)
 

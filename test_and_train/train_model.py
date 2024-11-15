@@ -6,7 +6,7 @@ from LoadData.utils import load_config
 import torch
 import torch.nn as nn
 
-from model_defination.model_loader import load_model
+from model_defination.model_loader import load_model_train
 from test_and_train.cosineannealingLR import CosineAnnealingLR
 
 # load the config file
@@ -18,26 +18,24 @@ device = torch.device(config['device'] if torch.cuda.is_available() else "cpu")
 
 if __name__ == "__main__":
     train_config = config["train_setting"]
-    net = load_model(config)
+    net = load_model_train(config)
     opt = optim.Adam(net.parameters(), lr=train_config['lr'])
     loss_fn = nn.BCEWithLogitsLoss()
-
-    # 使用余弦退火调度器
-    lr_scheduler = CosineAnnealingLR(
-        lr=train_config['lr'],  # 初始学习率，从配置文件中读取
-        t_max=train_config['t_max'],  # 设置余弦退火周期，单位为 epoch 数，通常为训练的总 epoch 数或其倍数
-        steps_per_epoch=len(get_train_dataset(config)),  # 每个 epoch 的步骤数，即每轮迭代的批次数量，通过数据集的长度获取
-        max_epoch=train_config['epochs'],  # 总训练 epoch 数，从配置文件中读取
-        warmup_epochs=train_config['warmup_epochs'],  # 预热的 epoch 数，在该阶段内学习率将线性增大到初始学习率
-        eta_min=train_config['eta_min']  # 最小学习率，用于余弦退火过程的最终学习率下限
-    )
-
-    learning_rates = lr_scheduler.get_lr()  # 获取整个训练过程中的学习率数组
 
     # load data
     data_loader = get_train_dataset(config)
     save_model_path = os.path.join(config["model_path"], config["model_name"])
 
+    # 使用余弦退火调度器
+    lr_scheduler = CosineAnnealingLR(
+        lr=train_config['lr'],  # 初始学习率，从配置文件中读取
+        t_max=train_config['t_max'],  # 设置余弦退火周期，单位为 epoch 数，通常为训练的总 epoch 数或其倍数
+        steps_per_epoch=len(data_loader),  # 每个 epoch 的步骤数，即每轮迭代的批次数量，通过数据集的长度获取
+        max_epoch=train_config['epochs'],  # 总训练 epoch 数，从配置文件中读取
+        warmup_epochs=train_config['warmup_epochs'],  # 预热的 epoch 数，在该阶段内学习率将线性增大到初始学习率
+        eta_min=train_config['eta_min']  # 最小学习率，用于余弦退火过程的最终学习率下限
+    )
+    learning_rates = lr_scheduler.get_lr()  # 获取整个训练过程中的学习率数组
     # 打开一个文件用于保存每个step的损失
     loss_log_path = os.path.join(config["model_path"], ("train_loss_log_" + f"{config["model_name"]}" + ".csv"))
     with open(loss_log_path, "w") as f:
@@ -63,7 +61,7 @@ if __name__ == "__main__":
 
             # 保存模型和日志
             if t % train_config["save_interval"] == 0:
-                torch.save(net.state_dict(), save_model_path + f"_{epochs}.pth")
+                torch.save(net.state_dict(), save_model_path + f"_{str(t / train_config["save_interval"])}.pth")
                 # 将当前step的损失保存到日志文件
                 with open(loss_log_path, "a") as f:
                     f.write(f"{epochs},{i},{train_loss.item():.6f}\n")

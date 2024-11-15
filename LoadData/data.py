@@ -18,7 +18,6 @@ transform = transforms.Compose([
 class MyDataset(Dataset):
     def __init__(self, config):
         self.config = config
-
         self.mask_name = os.listdir(os.path.join(self.config["dataset_path"], self.config["train_data_mask"]))
 
     def __len__(self):
@@ -45,7 +44,7 @@ class MyDataset(Dataset):
 
 def get_train_dataset(config):
     dataset_name = config["train_setting"]["train_dataset_name"]
-    print(f"load the dataset is {dataset_name}")
+    print(f"load the dataset is {dataset_name} 1")
     return DataLoader(MyDataset(config["train_setting"]["train_dataset"][dataset_name]),
                       batch_size=config['batch_size'],
                       shuffle=config['shuffle'],

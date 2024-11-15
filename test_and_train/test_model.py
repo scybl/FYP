@@ -1,13 +1,12 @@
-import os
 import random
-
 import numpy as np
-from torchvision.utils import save_image
+from torch import nn
 from LoadData.data import get_test_dataset
 from LoadData.utils import load_config
+from model_defination.model_loader import load_model_test
+import os
+import csv
 import torch
-import torch.nn as nn
-from model_defination.model_loader import load_model
 
 
 def set_seed(seed):
@@ -25,114 +24,124 @@ def set_seed(seed):
 class SegmentationEvaluator:
     def __init__(self, config_path):
         # 加载配置文件
+        self.net = None
         self.config = load_config(config_path)
         set_seed(self.config["test_setting"]['seed'])
         self.device = torch.device(self.config['device'] if torch.cuda.is_available() else "cpu")
-        self.model_path = os.path.join(self.config['model_path'], self.config['model_name'] + ".pth")
+        self.model_path = self.config['model_path']
+        self.model_name = self.config['model_name']
         self.data_loader = get_test_dataset(self.config)
-        # 使用外部的 load_model_from_config 函数来加载模型
-        self.net = load_model(self.config)
         self.loss_fn = nn.BCEWithLogitsLoss()
+
+    def load_model(self, model_path):
+        """加载模型权重"""
+        model = load_model_test(self.config)
+        model.load_state_dict(torch.load(model_path, map_location=self.device, weights_only=True))
+        return model.to(self.device)
 
     @staticmethod
     def dice_coefficient(pred, target):
-        """计算Dice系数"""
-        smooth = 1e-5
         intersection = (pred * target).sum()
-        dice = (2. * intersection + smooth) / (pred.sum() + target.sum() + smooth)
-        return dice.item()
-
-    @staticmethod
-    def pixel_accuracy(pred, target):
-        """计算像素准确率"""
-        correct = (pred == target).sum().item()
-        total = pred.numel()
-        return correct / total
+        return (2. * intersection) / (pred.sum() + target.sum() + 1e-6)
 
     @staticmethod
     def iou_coefficient(pred, target):
-        """计算IoU系数"""
-        smooth = 1e-5
         intersection = (pred * target).sum()
         union = pred.sum() + target.sum() - intersection
-        iou = (intersection + smooth) / (union + smooth)
-        return iou.item()
+        return intersection / (union + 1e-6)
+
+    @staticmethod
+    def pixel_accuracy(pred, target):
+        correct = (pred == target).sum()
+        return correct / target.numel()
 
     def evaluate(self):
-        """评估模型性能"""
-        total_loss = 0
-        total_dice = 0
-        total_iou = 0
-        total_pixel_acc = 0
-        num_batches = 0
+        """评估指定路径中的所有模型"""
+        results = []
 
-        # 设置模型为评估模式
-        self.net.eval()
+        # 获取路径中所有符合命名规则的.pth文件
+        model_files = [f for f in os.listdir(self.model_path) if f.startswith(self.model_name) and f.endswith(".pth")]
 
-        with torch.no_grad():
-            for i, (image, segment_image) in enumerate(self.data_loader):
-                image, segment_image = image.to(self.device), segment_image.to(self.device)
+        if not model_files:
+            print(f"No model files found for {self.model_name} in {self.model_path}")
+            return
 
-                # 获取模型输出
-                out_image = self.net(image)
+        best_model = None
+        best_dice = -1  # 用于记录最佳模型的 Dice 指标
+        print(model_files)
 
-                # 计算损失
-                loss = self.loss_fn(out_image, segment_image)
-                total_loss += loss.item()
+        for model_file in model_files:
+            model_path = os.path.join(self.model_path, model_file)
+            print(f"Evaluating model: {model_file}")
 
-                # 将模型输出转为二值化的掩码
-                pred = torch.sigmoid(out_image) > 0.5
-                pred = pred.float()
+            # 加载模型
+            self.net = self.load_model(model_path)
+            self.net.eval()
 
-                # 计算各项评估指标
-                dice = self.dice_coefficient(pred, segment_image)
-                total_dice += dice
+            total_loss = 0
+            total_dice = 0
+            total_iou = 0
+            total_pixel_acc = 0
+            num_batches = 0
 
-                iou = self.iou_coefficient(pred, segment_image)
-                total_iou += iou
+            with torch.no_grad():
+                for i, (image, segment_image) in enumerate(self.data_loader):
+                    image, segment_image = image.to(self.device), segment_image.to(self.device)
 
-                pixel_acc = self.pixel_accuracy(pred, segment_image)
-                total_pixel_acc += pixel_acc
+                    out_image = self.net(image)
 
-                # 保存图像
-                _image = image[0]
-                _segment_image = segment_image[0]
-                _out_image = pred[0]
-                img = torch.stack([_image, _segment_image, _out_image], dim=0)
-                save_image(img, f"{self.config['save_image_path']}/test_{i}.png")
+                    loss = self.loss_fn(out_image, segment_image)
+                    total_loss += loss.item()
 
-                print(
-                    f"Batch {i} --- Loss: {loss.item():.4f}, Dice: {dice:.4f}, IoU: {iou:.4f}, Pixel Acc: {pixel_acc:.4f}")
-                num_batches += 1
+                    pred = torch.sigmoid(out_image) > 0.5
+                    pred = pred.float()
 
-        # 计算平均指标
-        avg_loss = total_loss / num_batches
-        avg_dice = total_dice / num_batches
-        avg_iou = total_iou / num_batches
-        avg_pixel_acc = total_pixel_acc / num_batches
+                    dice = self.dice_coefficient(pred, segment_image)
+                    total_dice += dice
 
-        # 返回评估结果
-        _results = {
-            "avg_loss": avg_loss,
-            "avg_dice": avg_dice,
-            "avg_iou": avg_iou,
-            "avg_pixel_acc": avg_pixel_acc
-        }
+                    iou = self.iou_coefficient(pred, segment_image)
+                    total_iou += iou
 
-        print(f"Average Loss: {avg_loss:.4f}, ")
-        print(f"Average Dice: {avg_dice:.4f}, ")
-        print(f"Average IoU: {avg_iou:.4f}, ")
-        print(f"Average Pixel Accuracy: {avg_pixel_acc:.4f}")
-        # 计算并打印模型的参数量大小（单位：MB）
-        total_params = sum(p.numel() for p in self.net.parameters())
-        trainable_params = sum(p.numel() for p in self.net.parameters() if p.requires_grad)
+                    pixel_acc = self.pixel_accuracy(pred, segment_image)
+                    total_pixel_acc += pixel_acc
 
-        # 假设参数为 float32，每个参数占 4 字节
-        total_params_mb = total_params * 4 / (1024 * 1024)
-        trainable_params_mb = trainable_params * 4 / (1024 * 1024)
+                    num_batches += 1
 
-        print(f"Total Parameters: {total_params_mb:.2f} MB")
-        print(f"Trainable Parameters: {trainable_params_mb:.2f} MB")
+            avg_loss = total_loss / num_batches
+            avg_dice = total_dice / num_batches
+            avg_iou = total_iou / num_batches
+            avg_pixel_acc = total_pixel_acc / num_batches
+
+            # 保存评估结果
+            results.append({
+                "model_file": model_file,
+                "avg_loss": avg_loss,
+                "avg_dice": avg_dice,
+                "avg_iou": avg_iou,
+                "avg_pixel_acc": avg_pixel_acc
+            })
+
+            # 更新最佳模型
+            if avg_dice > best_dice:
+                best_dice = avg_dice
+                best_model = model_file
+
+        # 保存结果到CSV
+        csv_path = os.path.join(self.config['save_image_path'], "evaluation_results.csv")
+        with open(csv_path, mode="w", newline="") as csv_file:
+            writer = csv.DictWriter(csv_file,
+                                    fieldnames=["model_file", "avg_loss", "avg_dice", "avg_iou", "avg_pixel_acc"])
+            writer.writeheader()
+            writer.writerows(results)
+
+        print(f"Evaluation results saved to {csv_path}")
+
+        # 将最佳模型重命名为 model_best.pth
+        if best_model:
+            best_model_path = os.path.join(self.model_path, best_model)
+            best_model_dest = os.path.join(self.model_path, f"{self.model_name}_best.pth")
+            os.rename(best_model_path, best_model_dest)
+            print(f"Best model '{best_model}' renamed to '{self.model_name}_best.pth'")
 
 
 if __name__ == "__main__":
