@@ -1,8 +1,8 @@
 # 设备设置：cuda 或 cpu
 device: "cuda"  # 如果你有 GPU 并且想使用它，设置为 'cuda'，否则设置为 'cpu'
-model_name: "unetpp"
-save_image_path: "../saved_images"  # 用于保存预测结果的图像路径
-model_path: "../params/"  # 模型权重的保存和加载路径
+model_name: "fcn_8s"
+save_image_path: "saved_images"  # 用于保存预测结果的图像路径
+model_path: "params/"  # 模型权重的保存和加载路径
 
 # 数据加载器参数
 batch_size: 8  # 批次大小
@@ -24,7 +24,7 @@ train_setting:
   train_dataset:
     isic2018: # choose the isic data set
       size: 256
-      dataset_path: "../LoadData"
+      dataset_path: "LoadData"
       # must be absolute path from system root
       train_data_mask: "isic2018/train/mask"
       train_data_img: "isic2018/train/img"
@@ -40,7 +40,7 @@ test_setting:
   test_dataset:
     isic2018:
       size: 256
-      dataset_path: "../LoadData"
+      dataset_path: "LoadData"
       train_data_mask: "isic2018/test/mask"
       train_data_img: "isic2018/test/img"
 

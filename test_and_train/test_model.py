@@ -127,7 +127,7 @@ class SegmentationEvaluator:
                 best_model = model_file
 
         # 保存结果到CSV
-        csv_path = os.path.join(self.config['save_image_path'], "evaluation_results.csv")
+        csv_path = os.path.join(self.config['model_path'], "evaluation_results.csv")
         with open(csv_path, mode="w", newline="") as csv_file:
             writer = csv.DictWriter(csv_file,
                                     fieldnames=["model_file", "avg_loss", "avg_dice", "avg_iou", "avg_pixel_acc"])
@@ -146,7 +146,7 @@ class SegmentationEvaluator:
 
 if __name__ == "__main__":
     CONFIG_NAME = "config.yaml"
-    CONFIG_PATH = os.path.join("../configs/", CONFIG_NAME)
+    CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
     # 创建评估类的实例，并运行评估
     evaluator = SegmentationEvaluator(CONFIG_PATH)
     evaluator.evaluate()

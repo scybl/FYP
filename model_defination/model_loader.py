@@ -10,7 +10,7 @@ from model_defination.unetpp.unetpp import UnetPP
 
 # load the config file
 CONFIG_NAME = "config.yaml"
-CONFIG_PATH = os.path.join("../configs/", CONFIG_NAME)
+CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
 config = load_config(CONFIG_PATH)
 
 device = torch.device(config['device'] if torch.cuda.is_available() else "cpu")
@@ -53,7 +53,7 @@ def load_model_train(_config):
     # 根据模型名初始化模型
     if model_name == "unet":
         _model = UNetBase()
-    elif model_name == "unetpp":
+    elif model_name == "unetPP":
         _model = UnetPP()
     elif model_name == "res50":
         _model = ResNet152()
@@ -87,7 +87,7 @@ def load_model_test(_config):
 
     if model_name == "unet":
         model = UNetBase()
-    elif model_name == "unetpp":
+    elif model_name == "unetPP":
         model = UnetPP()
     elif model_name == "res50":
         model = ResNet50()
@@ -105,9 +105,10 @@ def load_model_test(_config):
 
 model_total = {
     "unetO": UNetBase,  # this is the basic unet model
-    "res50": ResNet50,  # ResNet50, ResNet101
+    "unetPP": UnetPP,
+    "res50": ResNet50,
     "res101": ResNet101,
-    "res152": ResNet152,  # ResNet50, ResNet101
+    "res152": ResNet152,
     "fcn_8s": FCN8s,
-    "unet": UnetPP
+
 }

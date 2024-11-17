@@ -11,7 +11,7 @@ from test_and_train.cosineannealingLR import CosineAnnealingLR
 
 # load the config file
 CONFIG_NAME = "config.yaml"
-CONFIG_PATH = os.path.join("../configs/", CONFIG_NAME)
+CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
 config = load_config(CONFIG_PATH)
 
 device = torch.device(config['device'] if torch.cuda.is_available() else "cpu")
