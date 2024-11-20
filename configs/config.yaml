@@ -1,6 +1,6 @@
 # 设备设置：cuda 或 cpu
 device: "cuda"  # 如果你有 GPU 并且想使用它，设置为 'cuda'，否则设置为 'cpu'
-model_name: "fcn_8s"
+model_name: "unet0"
 save_image_path: "saved_images"  # 用于保存预测结果的图像路径
 model_path: "params/"  # 模型权重的保存和加载路径
 

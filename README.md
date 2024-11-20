@@ -1,10 +1,22 @@
 # FlameWork
 
-currently, I have implement the following model
+currently, I have implement the following model, the following is my project context
 ```
-.dataset/
-    └──benchmark_RELEASE
-        └──dataset
+FYP/
+    └── _useless_code                        svae the useless code
+    └── Block                                NN block
+    └── configs
+        └──data_config
+        └──model_config
+        └──config.yaml                       KEY: control the whole project params
+    └── imgs                                 save the README.md file images
+    └── LoadData
+        └──
+        └──
+    └── imgs
+    └── imgs
+    └── imgs
+    └── imgs
             └──train.txt                  8498行图像的名字索引
             └──cls                        11355全是mat文件
             └──img                        11355全是jpg图像文件（隶属于voc的JPEGImage文件夹下的17125张jpg图像）

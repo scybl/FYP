@@ -2,7 +2,7 @@ import torch.nn as nn
 
 from Block.ConvBlock import ConvBlock
 
-
+# TODO: some bugs, need change
 class DownSample(nn.Module):
     def __init__(self, in_channels):
         super(DownSample, self).__init__()

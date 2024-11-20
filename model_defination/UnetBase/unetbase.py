@@ -10,7 +10,7 @@ class UNetBase(nn.Module):
     the changed point is change the max pool to the 2-size conv core
     """
 
-    def __init__(self):
+    def __init__(self, class_num=3):
         super(UNetBase, self).__init__()
         # ------开始下采样
         self.conv1_0 = ConvBlock(3, 64, 3, 1, 1, "reflect", False, 0.3)
@@ -58,7 +58,7 @@ class UNetBase(nn.Module):
         self.conv9 = ConvBlock(64, 64, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
                                bias=False, dropout_rate=0.3)
 
-        self.out = nn.Conv2d(64, 3, 3, 1, 1)
+        self.out = nn.Conv2d(64, class_num, 3, 1, 1)
         self.sigmoid = nn.Sigmoid()  # 使用sigmoid进行二分
 
     def forward(self, x):

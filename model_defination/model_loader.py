@@ -51,7 +51,7 @@ def load_model_train(_config):
     model_path = _config.get("model_path")
 
     # 根据模型名初始化模型
-    if model_name == "unet":
+    if model_name == "unet0":
         _model = UNetBase()
     elif model_name == "unetPP":
         _model = UnetPP()
@@ -85,7 +85,7 @@ def load_model_test(_config):
     """
     model_name = _config.get("model_name")
 
-    if model_name == "unet":
+    if model_name == "unet0":
         model = UNetBase()
     elif model_name == "unetPP":
         model = UnetPP()

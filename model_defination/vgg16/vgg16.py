@@ -5,7 +5,7 @@ import torch.utils.data
 from Block.ConvBlock import ConvBlock
 from Block.Sample import UpSample
 
-
+# TODO: need to upSample to the size * size PIC
 class VGG16(nn.Module):
     def __init__(self, num_classes=3):
         super(VGG16, self).__init__()
