@@ -14,32 +14,35 @@ class InceptionBlockV1(nn.Module):
         """
         Inception Block with dimension reduction.
         Args:
-            in_channels: Number of input channels
-            out_1x1: Number of output channels for the 1x1 convolution branch
-            red_3x3: Number of output channels for 1x1 reduction before 3x3 convolution
-            out_3x3: Number of output channels for the 3x3 convolution branch
-            red_5x5: Number of output channels for 1x1 reduction before 5x5 convolution
-            out_5x5: Number of output channels for the 5x5 convolution branch
-            out_pool: Number of output channels for the 1x1 convolution after max pooling
+            out_1x1: 25%
+
+            red_3x3: 25%
+            out_3x3: 50%
+
+            red_5x5: 6.25%
+            out_5x5: 12.5%
+
+            out_pool: 12.5%
         """
         super(InceptionBlockV1, self).__init__()
+
         self.branch1 = nn.Sequential(
-            ConvBlock(channels, ch5x5red, 1, 1, 0),
-            ConvBlock(channels, ch5x5, 5, 1, 2),
+            ConvBlock(channels, ch1x1, 1, 1, 0)
         )
 
         self.branch2 = nn.Sequential(
             ConvBlock(channels, ch3x3red, 1, 1, 0),
-            ConvBlock(channels, ch3x3, 3, 1, 1)
+            ConvBlock(ch3x3red, ch3x3, 3, 1, 1)
         )
 
         self.branch3 = nn.Sequential(
-            nn.MaxPool2d(3, 1, 1),
-            ConvBlock(channels, pool_proj, 1, 1, 0)
+            ConvBlock(channels, ch5x5red, 1, 1, 0),
+            ConvBlock(ch5x5red, ch5x5, 5, 1, 2),
         )
 
         self.branch4 = nn.Sequential(
-            ConvBlock(channels, ch1x1, 1, 1, 0)
+            nn.MaxPool2d(3, 1, 1),
+            ConvBlock(channels, pool_proj, 1, 1, 0)
         )
 
     def forward(self, x):

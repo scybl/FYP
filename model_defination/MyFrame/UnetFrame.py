@@ -2,6 +2,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+from Block.InceptionBlcokV1 import InceptionBlockV1
+
 
 class BizareBlock(nn.Module):
     """
@@ -58,23 +60,28 @@ class UpSample(nn.Module):
         return torch.cat((out, feature_map), dim=1)
 
 
-class UNet(nn.Module):
+class BNet(nn.Module):
     """
     according to the channel num to do
     """
 
     def __init__(self, num_classes=1):
-        super(UNet, self).__init__()
+        super(BNet, self).__init__()
         self.c1 = BizareBlock(3, 64)
         self.d1 = DownSample(64)
-        self.c2 = BizareBlock(64, 128)
+
+        self.c2 = InceptionBlockV1(64, 32, 32, 64, 8, 16, 16)
         self.d2 = DownSample(128)
-        self.c3 = BizareBlock(128, 256)
+
+        self.c3 = InceptionBlockV1(128, 64, 64, 128, 16, 32, 32)
         self.d3 = DownSample(256)
-        self.c4 = BizareBlock(256, 512)
+
+        self.c4 = InceptionBlockV1(256, 128, 128, 256, 32, 64, 64)
         self.d4 = DownSample(512)
-        self.c5 = BizareBlock(512, 1024)
+
+        self.c5 = InceptionBlockV1(512, 256, 256, 512, 64, 128, 128)
         self.u1 = UpSample(1024)
+
         self.c6 = BizareBlock(1024, 512)
         self.u2 = UpSample(512)
         self.c7 = BizareBlock(512, 256)
@@ -97,9 +104,3 @@ class UNet(nn.Module):
         O4 = self.c9(self.u4(O3, R1))
 
         return self.out(O4)
-
-
-if __name__ == '__main__':
-    x = torch.randn(2, 3, 256, 256)
-    net = UNet()
-    print(net(x).shape)
