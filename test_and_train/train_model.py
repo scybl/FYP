@@ -9,6 +9,14 @@ import torch.nn as nn
 from model_defination.model_loader import load_model_train
 from test_and_train.cosineannealingLR import CosineAnnealingLR
 
+
+def print_tensor_size(name, tensor):
+    if tensor is None:
+        print(f"{name}: Tensor is None")
+    else:
+        print(f"{name}: Size: {tensor.size()}, Device: {tensor.device}")
+
+
 # load the config file
 CONFIG_NAME = "config.yaml"
 CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
@@ -45,6 +53,8 @@ if __name__ == "__main__":
     t = 1
     while epochs <= train_config['epochs']:
         for i, (image, segment_image) in enumerate(data_loader):
+            # image is the original pic
+            # segment image is the mark pic
             image, segment_image = image.to(device), segment_image.to(device)
 
             # 动态更新学习率
@@ -70,6 +80,10 @@ if __name__ == "__main__":
             _image = image[0]
             _segment_image = segment_image[0]
             _out_image = out_image[0]
+
+            _segment_image = _segment_image.repeat(3, 1, 1)  # 重复 3 次通道，大小变为 [3, 256, 256]
+            _out_image = _out_image.repeat(3, 1, 1)  # 重复 3 次通道，大小变为 [3, 256, 256]
+
             img = torch.stack([_image, _segment_image, _out_image], dim=0)
             save_image(img, f"{config['save_image_path']}/{i}.png")
 

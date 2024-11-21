@@ -52,17 +52,17 @@ def load_model_train(_config):
 
     # 根据模型名初始化模型
     if model_name == "unet0":
-        _model = UNetBase()
+        _model = UNetBase(1)
     elif model_name == "unetPP":
-        _model = UnetPP()
+        _model = UnetPP(1)
     elif model_name == "res50":
-        _model = ResNet152()
+        _model = ResNet152(1)
     elif model_name == "res101":
-        _model = ResNet152()
+        _model = ResNet152(1)
     elif model_name == "res152":
-        _model = ResNet152()
+        _model = ResNet152(1)
     elif model_name == "fcn_8s":
-        _model = FCN8s()
+        _model = FCN8s(1)
     else:
         raise ValueError(f"Unknown model name '{model_name}' in config file.")
 

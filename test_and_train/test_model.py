@@ -59,7 +59,6 @@ class SegmentationEvaluator:
         """评估指定路径中的所有模型"""
         results = []
 
-        # 获取路径中所有符合命名规则的.pth文件
         model_files = [f for f in os.listdir(self.model_path) if f.startswith(self.model_name) and f.endswith(".pth")]
 
         if not model_files:
@@ -67,14 +66,13 @@ class SegmentationEvaluator:
             return
 
         best_model = None
-        best_dice = -1  # 用于记录最佳模型的 Dice 指标
-        print(model_files)
+        best_dice = -1
+        print(f"Found model files: {model_files}")
 
         for model_file in model_files:
             model_path = os.path.join(self.model_path, model_file)
             print(f"Evaluating model: {model_file}")
 
-            # 加载模型
             self.net = self.load_model(model_path)
             self.net.eval()
 
@@ -86,16 +84,28 @@ class SegmentationEvaluator:
 
             with torch.no_grad():
                 for i, (image, segment_image) in enumerate(self.data_loader):
+                    # 打印输入的形状
+                    print(f"Step {i}: Image shape: {image.shape}, Segment shape: {segment_image.shape}")
+
                     image, segment_image = image.to(self.device), segment_image.to(self.device)
 
+                    # 网络前向传播
                     out_image = self.net(image)
+                    print(f"Out image shape: {out_image.shape}")
 
+                    # 计算损失
                     loss = self.loss_fn(out_image, segment_image)
                     total_loss += loss.item()
 
+                    # 生成预测
                     pred = torch.sigmoid(out_image) > 0.5
                     pred = pred.float()
 
+                    # 调试预测和标签值
+                    print(
+                        f"Unique values in pred: {torch.unique(pred)}, Unique values in segment_image: {torch.unique(segment_image)}")
+
+                    # 计算评估指标
                     dice = self.dice_coefficient(pred, segment_image)
                     total_dice += dice
 
@@ -112,7 +122,9 @@ class SegmentationEvaluator:
             avg_iou = total_iou / num_batches
             avg_pixel_acc = total_pixel_acc / num_batches
 
-            # 保存评估结果
+            print(
+                f"Model {model_file} - Loss: {avg_loss:.4f}, Dice: {avg_dice:.4f}, IoU: {avg_iou:.4f}, Pixel Accuracy: {avg_pixel_acc:.4f}")
+
             results.append({
                 "model_file": model_file,
                 "avg_loss": avg_loss,
@@ -121,12 +133,10 @@ class SegmentationEvaluator:
                 "avg_pixel_acc": avg_pixel_acc
             })
 
-            # 更新最佳模型
             if avg_dice > best_dice:
                 best_dice = avg_dice
                 best_model = model_file
 
-        # 保存结果到CSV
         csv_path = os.path.join(self.config['model_path'], "evaluation_results.csv")
         with open(csv_path, mode="w", newline="") as csv_file:
             writer = csv.DictWriter(csv_file,
@@ -136,7 +146,6 @@ class SegmentationEvaluator:
 
         print(f"Evaluation results saved to {csv_path}")
 
-        # 将最佳模型重命名为 model_best.pth
         if best_model:
             best_model_path = os.path.join(self.model_path, best_model)
             best_model_dest = os.path.join(self.model_path, f"{self.model_name}_best.pth")
