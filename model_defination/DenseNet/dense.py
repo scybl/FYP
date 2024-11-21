@@ -8,6 +8,7 @@ from model_defination.DenseNet.TransitionBlock import TransitionBlock
 from model_defination.DenseNet.denseBlock import DenseBlock
 
 
+# TODO: dense net need more memory and calculate resource, so after need to be cared
 class DenseNet3(nn.Module):
     def __init__(self, depth, num_classes, growth_rate=12,
                  reduction=0.5, bottleneck=True, dropRate=0.0):
@@ -26,12 +27,12 @@ class DenseNet3(nn.Module):
         # 1st block
         self.block1 = DenseBlock(n, in_planes, growth_rate, block, dropRate)
         in_planes = int(in_planes + n * growth_rate)
-        self.trans1 = TransitionBlock(in_planes, int(math.floor(in_planes * reduction)), dropRate=dropRate)
+        self.trans1 = TransitionBlock(in_planes, int(math.floor(in_planes * reduction)), dropOut=dropRate)
         in_planes = int(math.floor(in_planes * reduction))
         # 2nd block
         self.block2 = DenseBlock(n, in_planes, growth_rate, block, dropRate)
         in_planes = int(in_planes + n * growth_rate)
-        self.trans2 = TransitionBlock(in_planes, int(math.floor(in_planes * reduction)), dropRate=dropRate)
+        self.trans2 = TransitionBlock(in_planes, int(math.floor(in_planes * reduction)), dropOut=dropRate)
         in_planes = int(math.floor(in_planes * reduction))
         # 3rd block
         self.block3 = DenseBlock(n, in_planes, growth_rate, block, dropRate)

@@ -1,94 +1,100 @@
 import torch
-import torch.nn as nn
-import torch.functional as F
-
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+from torch import nn
+from torch.nn import functional as F
 
 
-class ConvBlock(nn.Module):
-    """Basic convolutional block: Conv -> BN -> ReLU"""
-
-    def __init__(self, in_channels, out_channels):
-        super(ConvBlock, self).__init__()
-        self.conv = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
+class BizareBlock(nn.Module):
+    """
+    This class is controlled by the in_channel and out_channel arguments, to control the number of channels
+    """
+    def __init__(self, in_channel, out_channel):
+        super(BizareBlock, self).__init__()
+        self.layer = nn.Sequential(
+            nn.Conv2d(in_channel, out_channel, 3, 1, 1, padding_mode='reflect', bias=False),
+            nn.BatchNorm2d(out_channel),
+            nn.Dropout2d(0.3),
+            nn.LeakyReLU(),
+            nn.Conv2d(out_channel, out_channel, 3, 1, 1, padding_mode='reflect', bias=False),
+            nn.BatchNorm2d(out_channel),
+            nn.Dropout2d(0.3),
+            nn.LeakyReLU()
         )
 
-    def forward(self, x):
-        return self.conv(x)
+    def forward(self, _x):
+        return self.layer(_x)
 
 
-class Encoder(nn.Module):
-    """Encoder: Down-sampling using ConvBlocks and MaxPooling"""
+class DownSample(nn.Module):
+    """
+    Down sample will cut the pixel in half
+    """
+    def __init__(self, channel):
+        super(DownSample, self).__init__()
+        self.layer = nn.Sequential(
+            nn.Conv2d(channel, channel, 3, 2, 1, padding_mode='reflect', bias=False),
+            nn.BatchNorm2d(channel),
+            nn.LeakyReLU()
+        )
 
-    def __init__(self, in_channels, feature_channels):
-        super(Encoder, self).__init__()
-        self.layers = nn.ModuleList()
-        for channels in feature_channels:
-            self.layers.append(ConvBlock(in_channels, channels))
-            in_channels = channels
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
-
-    def forward(self, x):
-        features = []
-        for layer in self.layers:
-            x = layer(x)
-            features.append(x)
-            x = self.pool(x)
-        return features, x
+    def forward(self, _x):
+        return self.layer(_x)
 
 
-class Decoder(nn.Module):
-    """Decoder: Up-sampling and merging with skip connections"""
+class UpSample(nn.Module):
+    """
+    Up sample will double the pixel
+    """
+    def __init__(self, channel):
+        super(UpSample, self).__init__()
+        self.layer = nn.Conv2d(channel, channel // 2, 1, 1)
 
-    def __init__(self, feature_channels):
-        super(Decoder, self).__init__()
-        self.layers = nn.ModuleList()
-        for i in range(len(feature_channels) - 1, 0, -1):
-            self.layers.append(nn.ConvTranspose2d(
-                feature_channels[i], feature_channels[i - 1],
-                kernel_size=2, stride=2))
-            self.layers.append(ConvBlock(
-                feature_channels[i], feature_channels[i - 1]))
-
-    def forward(self, x, encoder_features):
-        for i in range(len(self.layers) // 2):
-            x = self.layers[2 * i](x)
-            skip = encoder_features[-(i + 1)]
-            x = torch.cat([x, skip], dim=1)
-            x = self.layers[2 * i + 1](x)
-        return x
+    def forward(self, _x, feature_map):
+        up = F.interpolate(_x, scale_factor=2, mode='nearest')
+        out = self.layer(up)
+        return torch.cat((out, feature_map), dim=1)
 
 
 class UNet(nn.Module):
-    """UNet framework"""
-
-    def __init__(self, in_channels=3, out_channels=1, feature_channels=[64, 128, 256, 512]):
+    """
+    according to the channel num to do
+    """
+    def __init__(self, num_classes=1):
         super(UNet, self).__init__()
-        self.encoder = Encoder(in_channels, feature_channels)
-        self.decoder = Decoder(feature_channels)
-        self.final_conv = nn.Conv2d(feature_channels[0], out_channels, kernel_size=1)
+        self.c1 = BizareBlock(3, 64)
+        self.d1 = DownSample(64)
+        self.c2 = BizareBlock(64, 128)
+        self.d2 = DownSample(128)
+        self.c3 = BizareBlock(128, 256)
+        self.d3 = DownSample(256)
+        self.c4 = BizareBlock(256, 512)
+        self.d4 = DownSample(512)
+        self.c5 = BizareBlock(512, 1024)
+        self.u1 = UpSample(1024)
+        self.c6 = BizareBlock(1024, 512)
+        self.u2 = UpSample(512)
+        self.c7 = BizareBlock(512, 256)
+        self.u3 = UpSample(256)
+        self.c8 = BizareBlock(256, 128)
+        self.u4 = UpSample(128)
+        self.c9 = BizareBlock(128, 64)
+        self.out = nn.Conv2d(64, num_classes, 3, 1, 1)
 
-    def forward(self, x):
-        encoder_features, bottleneck = self.encoder(x)
-        x = self.decoder(bottleneck, encoder_features)
-        return self.final_conv(x)
+    def forward(self, _x):
+        R1 = self.c1(_x)
+        R2 = self.c2(self.d1(R1))
+        R3 = self.c3(self.d2(R2))
+        R4 = self.c4(self.d3(R3))
+        R5 = self.c5(self.d4(R4))
+
+        O1 = self.c6(self.u1(R5, R4))
+        O2 = self.c7(self.u2(O1, R3))
+        O3 = self.c8(self.u3(O2, R2))
+        O4 = self.c9(self.u4(O3, R1))
+
+        return self.out(O4)
 
 
-# Example: Define a UNet model with flexible configurations
-if __name__ == "__main__":
-    # Define model
-    model = UNet(in_channels=3, out_channels=1, feature_channels=[64, 128, 256, 512])
-    print(model)
-
-    # Test the model with dummy input
-    input_tensor = torch.randn(1, 3, 256, 256)  # Batch size=1, 3 channels, 256x256
-    output = model(input_tensor)
-    print("Output shape:", output.shape)
+if __name__ == '__main__':
+    x = torch.randn(2, 3, 256, 256)
+    net = UNet()
+    print(net(x).shape)

@@ -3,13 +3,13 @@ import torch.nn.functional as F
 
 
 class TransitionBlock(nn.Module):
-    def __init__(self, in_planes, out_planes, dropRate=0.0):
+    def __init__(self, in_planes, out_planes, dropOut=0.3):
         super(TransitionBlock, self).__init__()
         self.bn1 = nn.BatchNorm2d(in_planes)
         self.relu = nn.ReLU(inplace=True)
         self.conv1 = nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=1,
                                padding=0, bias=False)
-        self.droprate = dropRate
+        self.droprate = dropOut
 
     def forward(self, x):
         out = self.conv1(self.relu(self.bn1(x)))
