@@ -11,6 +11,17 @@ class InceptionBlockV1(nn.Module):
     """
 
     def __init__(self, channels, ch1x1, ch3x3red, ch3x3, ch5x5red, ch5x5, pool_proj):
+        """
+        Inception Block with dimension reduction.
+        Args:
+            in_channels: Number of input channels
+            out_1x1: Number of output channels for the 1x1 convolution branch
+            red_3x3: Number of output channels for 1x1 reduction before 3x3 convolution
+            out_3x3: Number of output channels for the 3x3 convolution branch
+            red_5x5: Number of output channels for 1x1 reduction before 5x5 convolution
+            out_5x5: Number of output channels for the 5x5 convolution branch
+            out_pool: Number of output channels for the 1x1 convolution after max pooling
+        """
         super(InceptionBlockV1, self).__init__()
         self.branch1 = nn.Sequential(
             ConvBlock(channels, ch5x5red, 1, 1, 0),

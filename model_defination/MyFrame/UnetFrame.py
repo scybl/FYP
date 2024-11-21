@@ -7,6 +7,7 @@ class BizareBlock(nn.Module):
     """
     This class is controlled by the in_channel and out_channel arguments, to control the number of channels
     """
+
     def __init__(self, in_channel, out_channel):
         super(BizareBlock, self).__init__()
         self.layer = nn.Sequential(
@@ -14,7 +15,8 @@ class BizareBlock(nn.Module):
             nn.BatchNorm2d(out_channel),
             nn.Dropout2d(0.3),
             nn.LeakyReLU(),
-            nn.Conv2d(out_channel, out_channel, 3, 1, 1, padding_mode='reflect', bias=False),
+            # dilation mean the
+            nn.Conv2d(out_channel, out_channel, 3, 1, 1, padding_mode='reflect', bias=False, dilation=1),
             nn.BatchNorm2d(out_channel),
             nn.Dropout2d(0.3),
             nn.LeakyReLU()
@@ -28,6 +30,7 @@ class DownSample(nn.Module):
     """
     Down sample will cut the pixel in half
     """
+
     def __init__(self, channel):
         super(DownSample, self).__init__()
         self.layer = nn.Sequential(
@@ -44,6 +47,7 @@ class UpSample(nn.Module):
     """
     Up sample will double the pixel
     """
+
     def __init__(self, channel):
         super(UpSample, self).__init__()
         self.layer = nn.Conv2d(channel, channel // 2, 1, 1)
@@ -58,6 +62,7 @@ class UNet(nn.Module):
     """
     according to the channel num to do
     """
+
     def __init__(self, num_classes=1):
         super(UNet, self).__init__()
         self.c1 = BizareBlock(3, 64)
