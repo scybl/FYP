@@ -2,6 +2,10 @@ from ptflops import get_model_complexity_info
 import torch
 from model_defination.MyFrame.UnetFrame import BNet
 
+"""
+参数量主要影响-训练时间，因为它决定了模型在反向传播中需要优化的权重数量。
+计算量主要影响-推理时间，因为它决定了模型在正向传播中需要执行的计算操作数量。
+"""
 # 定义模型
 model = BNet()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

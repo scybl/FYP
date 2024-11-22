@@ -2,7 +2,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from Block.InceptionBlcokV1 import InceptionBlockV1
+from Block.InceptionBlcokV2 import InceptionBlockV2
+from Block.InceptionBlcokV3 import InceptionBlockV3
 
 
 class BizareBlock(nn.Module):
@@ -70,16 +71,16 @@ class BNet(nn.Module):
         self.c1 = BizareBlock(3, 64)
         self.d1 = DownSample(64)
 
-        self.c2 = InceptionBlockV1(64, 32, 32, 64, 8, 16, 16)
+        self.c2 = InceptionBlockV3(64, 32, 32, 64, 8, 16, 16)
         self.d2 = DownSample(128)
 
-        self.c3 = InceptionBlockV1(128, 64, 64, 128, 16, 32, 32)
+        self.c3 = InceptionBlockV3(128, 64, 64, 128, 16, 32, 32)
         self.d3 = DownSample(256)
 
-        self.c4 = InceptionBlockV1(256, 128, 128, 256, 32, 64, 64)
+        self.c4 = InceptionBlockV3(256, 128, 128, 256, 32, 64, 64)
         self.d4 = DownSample(512)
 
-        self.c5 = InceptionBlockV1(512, 256, 256, 512, 64, 128, 128)
+        self.c5 = InceptionBlockV3(512, 256, 256, 512, 64, 128, 128)
         self.u1 = UpSample(1024)
 
         self.c6 = BizareBlock(1024, 512)
