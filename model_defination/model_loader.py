@@ -100,6 +100,8 @@ def load_model_test(_config):
         model = ResNet152()
     elif model_name == "fcn_8s":
         model = FCN8s()
+    elif model_name == "bnet":
+        model = BNet(1)
     else:
         raise ValueError(f"Unknown model name '{model_name}' in config file.")
 

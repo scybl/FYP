@@ -91,5 +91,4 @@ if __name__ == "__main__":
             print(
                 f"Epoch {epochs} --- Step: {i} --- Train Loss: {train_loss.item()} --- Learning Rate: {current_lr:.6f}")
             t += 1
-
         epochs += 1
