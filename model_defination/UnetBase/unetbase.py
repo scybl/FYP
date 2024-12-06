@@ -13,24 +13,32 @@ class UNetBase(nn.Module):
     def __init__(self, class_num=1):
         super(UNetBase, self).__init__()
         # ------开始下采样
-        self.conv1_0 = ConvBlock(3, 64, 3, 1, 1, "reflect", False, 0.3)
-        self.conv1 = ConvBlock(64, 64, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
-                               bias=False, dropout_rate=0.3)
+        self.layer1 = nn.Sequential(
+            ConvBlock(3, 64, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock(64, 64, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+                      bias=False, dropout_rate=0.3)
+        )
         self.d1 = DownSample(64)
 
-        self.conv2_0 = ConvBlock(64, 128, 3, 1, 1, "reflect", False, 0.3)
-        self.conv2 = ConvBlock(128, 128, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
-                               bias=False, dropout_rate=0.3)
+        self.layer2 = nn.Sequential(
+            ConvBlock(64, 128, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock(128, 128, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+                      bias=False, dropout_rate=0.3)
+        )
         self.d2 = DownSample(128)
 
-        self.conv3_0 = ConvBlock(128, 256, 3, 1, 1, "reflect", False, 0.3)
-        self.conv3 = ConvBlock(256, 256, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
-                               bias=False, dropout_rate=0.3)
+        self.layer3 = nn.Sequential(
+            ConvBlock(128, 256, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock(256, 256, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+                      bias=False, dropout_rate=0.3)
+        )
         self.d3 = DownSample(256)
 
-        self.conv4_0 = ConvBlock(256, 512, 3, 1, 1, "reflect", False, 0.3)
-        self.conv4 = ConvBlock(512, 512, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
-                               bias=False, dropout_rate=0.3)
+        self.layer4 = nn.Sequential(
+            ConvBlock(256, 512, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock(512, 512, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+                      bias=False, dropout_rate=0.3)
+        )
         self.d4 = DownSample(512)
 
         self.conv5_0 = ConvBlock(512, 1024, 3, 1, 1, "reflect", False, 0.3)

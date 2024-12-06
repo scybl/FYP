@@ -1,6 +1,6 @@
 from ptflops import get_model_complexity_info
 import torch
-from model_defination.MyFrame.UnetFrame import BNet
+from model_defination.AAA_BNet.BNet import BNet
 
 """
 参数量主要影响-训练时间，因为它决定了模型在反向传播中需要优化的权重数量。

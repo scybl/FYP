@@ -2,8 +2,9 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from Block.InceptionBlcokV2 import InceptionBlockV2
-from Block.InceptionBlcokV3 import InceptionBlockV3
+from model_defination.AAA_BNet.DAG import DAG
+from model_defination.AAA_BNet.PHAM import PHAM
+from model_defination.AAA_BNet.UCB import UCB
 
 
 class BizareBlock(nn.Module):
@@ -31,15 +32,15 @@ class BizareBlock(nn.Module):
 
 class DownSample(nn.Module):
     """
-    Down sample will cut the pixel in half
+    Down sample will cut the pixel in half using Max Pooling
     """
 
     def __init__(self, channel):
         super(DownSample, self).__init__()
         self.layer = nn.Sequential(
-            nn.Conv2d(channel, channel, 3, 2, 1, padding_mode='reflect', bias=False),
-            nn.BatchNorm2d(channel),
-            nn.LeakyReLU()
+            nn.MaxPool2d(kernel_size=2, stride=2),  # 最大池化
+            nn.BatchNorm2d(channel),  # 保持批量归一化
+            nn.LeakyReLU()  # 保持激活函数
         )
 
     def forward(self, _x):
@@ -68,40 +69,52 @@ class BNet(nn.Module):
 
     def __init__(self, num_classes=1):
         super(BNet, self).__init__()
-        self.c1 = BizareBlock(3, 64)
-        self.d1 = DownSample(64)
+        self.cc1 = BizareBlock(3, 64)
+        self.dag1 = DAG(64)
+        self.down1 = DownSample(64)
 
-        self.c2 = InceptionBlockV3(64, 32, 32, 64, 8, 16, 16)
-        self.d2 = DownSample(128)
+        self.cc2 = BizareBlock(64, 128)
+        self.dag2 = DAG(128)
+        self.down2 = DownSample(128)
 
-        self.c3 = InceptionBlockV3(128, 64, 64, 128, 16, 32, 32)
+        self.cc3 = BizareBlock(128, 256)
+        self.dag3 = DAG(256)
         self.d3 = DownSample(256)
 
-        self.c4 = InceptionBlockV3(256, 128, 128, 256, 32, 64, 64)
-        self.d4 = DownSample(512)
+        self.cc4 = BizareBlock(256, 512)  # 512*32*32
 
-        self.c5 = InceptionBlockV3(512, 256, 256, 512, 64, 128, 128)
-        self.u1 = UpSample(1024)
+        self.pham1 = PHAM(512)
+        self.ucb1 = UCB(512, 256)  # 同时缩减通道维度并扩张空间维度, (256,64,64)
 
-        self.c6 = BizareBlock(1024, 512)
-        self.u2 = UpSample(512)
-        self.c7 = BizareBlock(512, 256)
-        self.u3 = UpSample(256)
-        self.c8 = BizareBlock(256, 128)
-        self.u4 = UpSample(128)
-        self.c9 = BizareBlock(128, 64)
-        self.out = nn.Conv2d(64, num_classes, 3, 1, 1)
+        self.pham2 = PHAM(256)
+        self.ucb2 = UCB(256, 128)
+
+        self.pham3 = PHAM(128)
+        self.ucb3 = UCB(128, 64)
+
+        self.pham4 = PHAM(64)
+
+        self.convFinal1 = nn.Conv2d(64, num_classes, 1)
 
     def forward(self, _x):
-        R1 = self.c1(_x)
-        R2 = self.c2(self.d1(R1))
-        R3 = self.c3(self.d2(R2))
-        R4 = self.c4(self.d3(R3))
-        R5 = self.c5(self.d4(R4))
+        R1 = self.cc1(_x)
+        R2 = self.cc2(self.down1(R1))
+        R3 = self.cc3(self.down2(R2))
+        R4 = self.cc4(self.d3(R3))
 
-        O1 = self.c6(self.u1(R5, R4))
-        O2 = self.c7(self.u2(O1, R3))
-        O3 = self.c8(self.u3(O2, R2))
-        O4 = self.c9(self.u4(O3, R1))
+        U1 = self.ucb1(self.pham1(R4))
 
-        return self.out(O4)
+        Dag1 = self.dag3(R3, U1)
+        plus1_out = Dag1 + U1
+
+        U2 = self.ucb2(self.pham2(plus1_out))
+        Dag2 = self.dag2(R2, U2)
+        plus2_out = Dag2 + U2
+
+        U3 = self.ucb3(self.pham3(plus2_out))
+        Dag3 = self.dag1(R1, U3)
+        plus3_out = Dag3 + U3
+
+        out = self.convFinal1(self.pham4(plus3_out))
+
+        return out
