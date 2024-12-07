@@ -3,31 +3,31 @@
 以下是我的项目目录，以及相关的comments
 ```markdown
 FYP/
-    └── _useless_code													Save the useless code, could ignore
-    └── Block																	NN block, if unnecessary, no change
+    └── _useless_code											Save the useless code, could ignore
+    └── Block													NN block, if unnecessary, no change
     └── configs
-        └── config.yaml												KEY: control the whole project params
+        └── config.yaml											KEY: control the whole project params
     └── LoadData
-        └── data.py														Load the data, controlled by the config.yaml
-        └── utils.py													Improve the support function for data.py
-    └── model_defination											All the model
-        └── MyFrame														**The project model designned by myself**
-        └── LoadModel.py											Load model function, controlled by configs.yaml
-        └── UnetBasethe												Functional unet model
-        └── Unext   													Advance Unet -> Unext
-        └── Unetpp  													Unet Plus Plus
-        └── SeNet   													Squeeze-and-Excitation Networks
-        └── DenseNetDensely 									Connected Convolutional Networks
-        └── ResNet														Residual Neural networks(50, 101, 152)
-        └── fcn_s8  													Fully Convolutional Networks
-        └── vgg16   													Fully Convolutional Networks
-    └── test_and_train												The code about test and train
-        └── cosineannealingLR.py							Cosine annealing function
-        └── test_model.py											Test the model
-        └── out_diagram.py										Base on the test and train model, Output image
-        └── train_model.py										Train the model, controlled by config.yaml
-    └── FLOPs.py															Calculate the params count and calculate count
-    └── README.md															Read me file
+        └── data.py												Load the data, controlled by the config.yaml
+        └── utils.py											Improve the support function for data.py
+    └── model_defination										All the model
+        └── MyFrame												**The project model designned by myself**
+        └── LoadModel.py										Load model function, controlled by configs.yaml
+        └── UnetBasethe												
+        └── Unext   													
+        └── Unetpp  													
+        └── SeNet   													
+        └── DenseNetDensely 									
+        └── ResNet														
+        └── fcn_s8  													
+        └── vgg16   													
+    └── test_and_train											The code about test and train
+        └── cosineannealingLR.py							    Cosine annealing function, return the lr
+        └── test_model.py										Test the model
+        └── out_diagram.py										
+        └── train_model.py										
+    └── FLOPs.py												Calculate the params count and calculate count
+    └── README.md															
 
 ```
 
