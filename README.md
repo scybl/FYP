@@ -37,7 +37,7 @@ FYP/
 #!/bin/bash
 
 # Define the directory names
-DIRS=("img_save" "model_save")
+DIRS=("saved_images" "params")
 
 # Loop through the directory names
 for DIR_NAME in "${DIRS[@]}"; do

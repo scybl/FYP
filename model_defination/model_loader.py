@@ -3,7 +3,7 @@ import os
 import torch
 from glob import glob
 from LoadData.utils import load_config
-from model_defination.MyFrame.UnetFrame import BNet
+from model_defination.AAA_BNet.BNet import BNet
 from model_defination.ResNet.resnet import ResNet101, ResNet50, ResNet152
 from model_defination.UnetBase.unetbase import UNetBase
 from model_defination.fcn_8s.fnc_8s import FCN8s
@@ -100,6 +100,8 @@ def load_model_test(_config):
         model = ResNet152()
     elif model_name == "fcn_8s":
         model = FCN8s()
+    elif model_name == "bnet":
+        model = BNet(1)
     else:
         raise ValueError(f"Unknown model name '{model_name}' in config file.")
 
