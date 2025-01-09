@@ -45,7 +45,7 @@ if __name__ == "__main__":
     )
     learning_rates = lr_scheduler.get_lr()  # 获取整个训练过程中的学习率数组
     # 打开一个文件用于保存每个step的损失
-    loss_log_path = os.path.join(config["model_path"], ("train_loss_log_" + f"{config["model_name"]}" + ".csv"))
+    loss_log_path = os.path.join(config['model_path'], ('train_loss_log_' + f"{config['model_name']}" + ".csv"))
     with open(loss_log_path, "w") as f:
         f.write("epoch,step,train_loss\n")  # 写入CSV文件的表头
 
@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
             # 保存模型和日志
             if t % train_config["save_interval"] == 0:
-                torch.save(net.state_dict(), save_model_path + f"_{str(t / train_config["save_interval"])}.pth")
+                torch.save(net.state_dict(), save_model_path + f"_{str(t / train_config['save_interval'])}.pth")
                 # 将当前step的损失保存到日志文件
                 with open(loss_log_path, "a") as f:
                     f.write(f'{epochs},{i},{train_loss.item():.6f}\n')
