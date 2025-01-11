@@ -1,12 +1,12 @@
 import os
 from torch import optim
 from torchvision.utils import save_image
-from LoadData.data import get_train_dataset
+from LoadData.data import get_dataset
 from LoadData.utils import load_config
 import torch
 import torch.nn as nn
 
-from model_defination.model_loader import load_model_train
+from model_defination.model_loader import load_model
 from test_and_train.cosineannealingLR import CosineAnnealingLR
 
 
@@ -18,7 +18,7 @@ def print_tensor_size(name, tensor):
 
 
 # load the config file
-CONFIG_NAME = "config.yaml"
+CONFIG_NAME = "config_train.yaml"
 CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
 config = load_config(CONFIG_PATH)
 
@@ -26,13 +26,13 @@ device = torch.device(config['device'] if torch.cuda.is_available() else "cpu")
 
 if __name__ == "__main__":
     train_config = config["train_setting"]
-    net = load_model_train(config)
+    net = load_model(config, 'train')
     opt = optim.Adam(net.parameters(), lr=train_config['lr'])
     loss_fn = nn.BCEWithLogitsLoss()
 
     # load data
-    data_loader = get_train_dataset(config)
-    save_model_path = os.path.join(config["model_path"], config["model_name"])
+    data_loader = get_dataset(config,'train')
+    save_model_path = os.path.join(config['model']["save_path"], config["model"]['name'])
 
     # 使用余弦退火调度器
     lr_scheduler = CosineAnnealingLR(
@@ -45,7 +45,7 @@ if __name__ == "__main__":
     )
     learning_rates = lr_scheduler.get_lr()  # 获取整个训练过程中的学习率数组
     # 打开一个文件用于保存每个step的损失
-    loss_log_path = os.path.join(config['model_path'], ('train_loss_log_' + f"{config['model_name']}" + ".csv"))
+    loss_log_path = os.path.join(config['model']['save_path'], ('train_loss_log_' + f"{config['model']['name']}" + ".csv"))
     with open(loss_log_path, "w") as f:
         f.write("epoch,step,train_loss\n")  # 写入CSV文件的表头
 

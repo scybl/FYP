@@ -1,0 +1,34 @@
+device: "cuda"  # cpu/ cuda
+model:
+  name: "bnet"
+  save_path: "params/"  # weight saving path
+save_image_path: "saved_images"  # save the predicted pic
+
+# 数据加载器配置
+data_loader:
+  batch_size: 8
+  shuffle: true
+  num_workers: 16
+
+# 训练配置
+train_setting:
+  lr: 0.001
+  eta_min: 0.00001
+  t_max: 25
+  epochs: 100
+  warmup_epochs: 10
+  save_interval: 50
+  dataset_name: "isic2018"
+
+# 数据集公共配置
+datasets:
+  isic2018:
+    size: 256
+    class_num: 1
+    dataset_path: "LoadData"
+    img_prefix: "ISIC_"
+    seg_prefix: "ISIC_"
+    img_suffix: ".jpg"
+    seg_suffix: "_segmentation.png"
+    img: "isic2018/train/img"
+    mask: "isic2018/train/mask"

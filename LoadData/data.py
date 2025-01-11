@@ -48,7 +48,7 @@ class MyDataset(Dataset):
 
     def __init__(self, config, _transform_image=None, transform_label=None, class_num=1):
         self.config = config
-        self.mask_name = os.listdir(os.path.join(self.config["dataset_path"], self.config["train_data_mask"]))
+        self.mask_name = os.listdir(os.path.join(self.config["dataset_path"], self.config["mask"]))
         self.transform_image = _transform_image
         self.transform_label = transform_label
         self.class_num = class_num
@@ -59,12 +59,12 @@ class MyDataset(Dataset):
     def __getitem__(self, index):
         # 获取掩膜文件名和路径
         segment_name = self.mask_name[index]
-        segment_path = os.path.join(self.config["dataset_path"], self.config["train_data_mask"], segment_name)
+        segment_path = os.path.join(self.config["dataset_path"], self.config['mask'], segment_name)
 
         # 根据掩膜文件名生成图像文件名
         image_name = segment_name.replace(self.config["seg_prefix"], self.config["img_prefix"]).replace(
             self.config["seg_suffix"], self.config["img_suffix"])
-        image_path = os.path.join(self.config["dataset_path"], self.config["train_data_img"], image_name)
+        image_path = os.path.join(self.config["dataset_path"], self.config["img"], image_name)
 
         # 加载图像和标签
         segment_image = keep_image_size_open(segment_path, (self.config["size"], self.config["size"]))
@@ -79,19 +79,39 @@ class MyDataset(Dataset):
         return img_image, segment_image
 
 
-def get_train_dataset(config):
+def get_dataset(config, mode):
     """
-    获取训练数据加载器，根据数据集中的 class_num 值定义标签预处理逻辑
+    通用数据加载器函数，用于获取训练或测试数据加载器。
+
+    :param config: 配置字典，包含数据集和加载器的配置信息。
+    :param mode: 数据模式，"train" 或 "test"，决定加载训练或测试数据。
+    :return: 数据加载器 (DataLoader) 对象。
     """
-    dataset_name = config["train_setting"]["train_dataset_name"]
-    print(f"Loading training dataset: {dataset_name}")
+    if mode == "train":
+        dataset_name = config["train_setting"]["dataset_name"]
+        dataset_config = config["datasets"][dataset_name]
+        batch_size = config["data_loader"]["batch_size"]
+        shuffle = config["data_loader"]["shuffle"]
+        num_workers = config["data_loader"]["num_workers"]
+
+    elif mode == "test":
+        dataset_name = config["test_setting"]["dataset_name"]
+        dataset_config = config["datasets"][dataset_name]
+        batch_size = config.get("batch_size", 1)  # 默认值为1，防止遗漏配置
+        shuffle = config.get("shuffle", False)  # 测试集一般不打乱数据
+        num_workers = config.get("num_workers", 4)  # 默认值为4
+
+    else:
+        raise ValueError(f"Unsupported mode '{mode}'. Use 'train' or 'test'.")
+
+    print(f"Loading {mode} dataset: {dataset_name}")
 
     # 获取数据集的 class_num
-    class_num = config["train_setting"]["train_dataset"][dataset_name]["class_num"]
+    class_num = dataset_config.get("class_num", 1)
 
     # 初始化数据集
     dataset = MyDataset(
-        config["train_setting"]["train_dataset"][dataset_name],
+        dataset_config,
         _transform_image=transform_image,
         transform_label=LabelProcessor(class_num=class_num),
         class_num=class_num
@@ -99,31 +119,6 @@ def get_train_dataset(config):
 
     # 返回数据加载器
     return DataLoader(dataset,
-                      batch_size=config['batch_size'],
-                      shuffle=config['shuffle'],
-                      num_workers=config['num_workers'])
-
-
-def get_test_dataset(config):
-    """
-    获取测试数据加载器，根据数据集中的 class_num 值定义标签预处理逻辑
-    """
-    dataset_name = config["test_setting"]["test_dataset_name"]
-    print(f"Loading testing dataset: {dataset_name}")
-
-    # 获取数据集的 class_num
-    class_num = config["test_setting"]["test_dataset"][dataset_name].get("class_num", 1)
-
-    # 初始化数据集
-    dataset = MyDataset(
-        config["test_setting"]["test_dataset"][dataset_name],
-        _transform_image=transform_image,
-        transform_label=LabelProcessor(class_num=class_num),
-        class_num=class_num
-    )
-
-    # 返回数据加载器
-    return DataLoader(dataset,
-                      batch_size=config['batch_size'],
-                      shuffle=config['shuffle'],
-                      num_workers=config['num_workers'])
+                      batch_size=batch_size,
+                      shuffle=shuffle,
+                      num_workers=num_workers)

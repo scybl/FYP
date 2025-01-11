@@ -10,7 +10,7 @@ from model_defination.fcn_8s.fnc_8s import FCN8s
 from model_defination.unetpp.unetpp import UnetPP
 
 # load the config file
-CONFIG_NAME = "config.yaml"
+CONFIG_NAME = "config_train.yaml"
 CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
 config = load_config(CONFIG_PATH)
 
@@ -46,75 +46,44 @@ def get_best_or_latest_model_path(model_path, model_name):
     return numbered_files[0][0]
 
 
+# 模型映射表
+model_mapping = {
+    "unet0": lambda: UNetBase(1),
+    "unetPP": lambda: UnetPP(1),
+    "res50": lambda: ResNet50(1),
+    "res101": lambda: ResNet101(1),
+    "res152": lambda: ResNet152(1),
+    "fcn_8s": lambda: FCN8s(1),
+    "bnet": lambda: BNet(1)
+}
+
+
 # 定义一个模型加载函数
-def load_model_train(_config):
-    model_name = _config.get("model_name")
-    model_path = _config.get("model_path")
-
-    # 根据模型名初始化模型
-    if model_name == "unet0":
-        _model = UNetBase(1)
-    elif model_name == "unetPP":
-        _model = UnetPP(1)
-    elif model_name == "res50":
-        _model = ResNet152(1)
-    elif model_name == "res101":
-        _model = ResNet152(1)
-    elif model_name == "res152":
-        _model = ResNet152(1)
-    elif model_name == "fcn_8s":
-        _model = FCN8s(1)
-    elif model_name == "bnet":
-        _model = BNet(1)
-    else:
-        raise ValueError(f"Unknown model name '{model_name}' in config file.")
-
-    # 获取权重文件路径
-    try:
-        weight_path = get_best_or_latest_model_path(model_path, model_name)
-        print(f"Loading weights from {weight_path}")
-        _model.load_state_dict(torch.load(weight_path, map_location=device, weights_only=True))
-        print("Successfully loaded weights.")
-    except FileNotFoundError as e:
-        print(e)
-        print("No weights loaded.")
-
-    return _model.to(device)
-
-
-def load_model_test(_config):
+def load_model(_config, mode):
     """
     根据配置文件中的模型名称加载模型结构，并返回模型实例。
+
+    :param _config: 配置字典，包含模型名称、路径等信息。
+    :param mode: 加载模式，'train' 或 'test'，用于区分加载训练或测试权重。
+    :return: 初始化的模型实例。
     """
-    model_name = _config.get("model_name")
+    model_name = _config.get("model")['name']
+    model_path = _config.get("model")['save_path']
 
-    if model_name == "unet0":
-        model = UNetBase()
-    elif model_name == "unetPP":
-        model = UnetPP()
-    elif model_name == "res50":
-        model = ResNet50()
-    elif model_name == "res101":
-        model = ResNet101()
-    elif model_name == "res152":
-        model = ResNet152()
-    elif model_name == "fcn_8s":
-        model = FCN8s()
-    elif model_name == "bnet":
-        model = BNet(1)
-    else:
+    # 初始化模型
+    if model_name not in model_mapping:
         raise ValueError(f"Unknown model name '{model_name}' in config file.")
+    model = model_mapping[model_name]()
 
-    return model
+    # 如果是训练模式，尝试加载权重
+    if mode == "train":
+        try:
+            weight_path = get_best_or_latest_model_path(model_path, model_name)
+            print(f"Loading weights from {weight_path}")
+            model.load_state_dict(torch.load(weight_path, map_location=device, weights_only=True))
+            print("Successfully loaded weights.")
+        except FileNotFoundError as e:
+            print(e)
+            print("No weights loaded.")
 
-
-model_total = {
-    "unetO": UNetBase,  # this is the basic unet model
-    "unetPP": UnetPP,
-    "res50": ResNet50,
-    "res101": ResNet101,
-    "res152": ResNet152,
-    "fcn_8s": FCN8s,
-    "bnet": BNet,
-
-}
+    return model.to(device)

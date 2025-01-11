@@ -1,9 +1,9 @@
 import random
 import numpy as np
 from torch import nn
-from LoadData.data import get_test_dataset
+from LoadData.data import get_dataset
 from LoadData.utils import load_config
-from model_defination.model_loader import load_model_test
+from model_defination.model_loader import load_model
 import os
 import csv
 import torch
@@ -28,14 +28,14 @@ class SegmentationEvaluator:
         self.config = load_config(config_path)
         set_seed(self.config["test_setting"]['seed'])
         self.device = torch.device(self.config['device'] if torch.cuda.is_available() else "cpu")
-        self.model_path = self.config['model_path']
-        self.model_name = self.config['model_name']
-        self.data_loader = get_test_dataset(self.config)
+        self.model_path = self.config['model'][('save_path')]
+        self.model_name = self.config['model']['name']
+        self.data_loader = get_dataset(self.config, 'test')
         self.loss_fn = nn.BCEWithLogitsLoss()
 
     def load_model(self, model_path):
         """加载模型权重"""
-        model = load_model_test(self.config)
+        model = load_model(self.config, 'test')
         model.load_state_dict(torch.load(model_path, map_location=self.device, weights_only=True))
         return model.to(self.device)
 
@@ -154,7 +154,7 @@ class SegmentationEvaluator:
 
 
 if __name__ == "__main__":
-    CONFIG_NAME = "config.yaml"
+    CONFIG_NAME = "config_test.yaml"
     CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
     # 创建评估类的实例，并运行评估
     evaluator = SegmentationEvaluator(CONFIG_PATH)
