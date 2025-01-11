@@ -1,7 +1,11 @@
 import os
+from builtins import print
+
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 from PIL import Image
+
+from LoadData.DataAugmentation import AugmentedDataset, SynchronizedTransform
 
 # 定义图像和标签的变换
 transform_image = transforms.Compose([
@@ -93,13 +97,14 @@ def get_dataset(config, mode):
         batch_size = config["data_loader"]["batch_size"]
         shuffle = config["data_loader"]["shuffle"]
         num_workers = config["data_loader"]["num_workers"]
-
+        augmentations = config["train_setting"].get("augmentations", [])
     elif mode == "test":
         dataset_name = config["test_setting"]["dataset_name"]
         dataset_config = config["datasets"][dataset_name]
         batch_size = config.get("batch_size", 1)  # 默认值为1，防止遗漏配置
         shuffle = config.get("shuffle", False)  # 测试集一般不打乱数据
         num_workers = config.get("num_workers", 4)  # 默认值为4
+        augmentations = []
 
     else:
         raise ValueError(f"Unsupported mode '{mode}'. Use 'train' or 'test'.")
@@ -116,6 +121,15 @@ def get_dataset(config, mode):
         transform_label=LabelProcessor(class_num=class_num),
         class_num=class_num
     )
+
+    # 这是基础变换，后面还要加新的变换方式
+    transform = SynchronizedTransform([
+        transforms.RandomHorizontalFlip(p=0.5),  # 水平翻转
+        transforms.RandomRotation(degrees=15),  # 随机旋转
+        transforms.Resize((256, 256)),  # 固定大小
+    ])
+
+    dataset = AugmentedDataset(base_dataset=dataset, transform=transform)
 
     # 返回数据加载器
     return DataLoader(dataset,

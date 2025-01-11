@@ -84,14 +84,10 @@ class SegmentationEvaluator:
 
             with torch.no_grad():
                 for i, (image, segment_image) in enumerate(self.data_loader):
-                    # 打印输入的形状
-                    print(f"Step {i}: Image shape: {image.shape}, Segment shape: {segment_image.shape}")
-
                     image, segment_image = image.to(self.device), segment_image.to(self.device)
 
                     # 网络前向传播
                     out_image = self.net(image)
-                    print(f"Out image shape: {out_image.shape}")
 
                     # 计算损失
                     loss = self.loss_fn(out_image, segment_image)
@@ -100,10 +96,6 @@ class SegmentationEvaluator:
                     # 生成预测
                     pred = torch.sigmoid(out_image) > 0.5
                     pred = pred.float()
-
-                    # 调试预测和标签值
-                    print(
-                        f"Unique values in pred: {torch.unique(pred)}, Unique values in segment_image: {torch.unique(segment_image)}")
 
                     # 计算评估指标
                     dice = self.dice_coefficient(pred, segment_image)
@@ -156,6 +148,5 @@ class SegmentationEvaluator:
 if __name__ == "__main__":
     CONFIG_NAME = "config_test.yaml"
     CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
-    # 创建评估类的实例，并运行评估
     evaluator = SegmentationEvaluator(CONFIG_PATH)
     evaluator.evaluate()

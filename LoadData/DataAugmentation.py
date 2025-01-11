@@ -1,67 +1,62 @@
-from torchvision import transforms
-from PIL import Image
 import random
+import torch
+from torchvision.transforms.functional import to_tensor, to_pil_image
 
 
-class DataAugmentation:
+class SynchronizedTransform:
     """
-    A class to dynamically apply data augmentation methods based on input list.
+    自定义同步变换类，确保图像和 mask 同时进行相同的增强操作。
     """
 
-    def __init__(self, augmentations=None, image_size=(384, 384)):
+    def __init__(self, transforms):
+        self.transforms = transforms  # 传入需要同步的增强操作列表
+
+    def __call__(self, image, mask=None):
         """
-        Initialize the CustomAugmentation class.
-
-        :param augmentations: List of augmentations to apply, e.g., ["反转", "旋转"].
-        :param image_size: Target size for resizing the images.
+        对图像和 mask 同时应用增强。
         """
-        self.image_size = image_size
-        self.augmentations = augmentations if augmentations else []
+        for transform in self.transforms:
+            seed = random.randint(0, 2 ** 32)  # 确保随机数种子一致
+            random.seed(seed)
+            torch.manual_seed(seed)
 
-        self.transform_list = []
-        self.gt_transform_list = []
+            # 确保变换对图像和 mask 同步应用
+            image = transform(image)
+            if mask is not None:
+                random.seed(seed)
+                torch.manual_seed(seed)
+                mask = transform(mask)
 
-        for aug in self.augmentations:
-            if aug == "反转":
-                self.transform_list.append(transforms.RandomHorizontalFlip(p=0.5))
-                self.transform_list.append(transforms.RandomVerticalFlip(p=0.5))
-                self.gt_transform_list.append(transforms.RandomHorizontalFlip(p=0.5))
-                self.gt_transform_list.append(transforms.RandomVerticalFlip(p=0.5))
-            elif aug == "旋转":
-                self.transform_list.append(transforms.RandomRotation(90))
-                self.gt_transform_list.append(transforms.RandomRotation(90))
-            # Add more augmentations as needed
-            elif aug == "裁剪":
-                self.transform_list.append(transforms.RandomResizedCrop(size=image_size, scale=(0.8, 1.0)))
-                self.gt_transform_list.append(transforms.RandomResizedCrop(size=image_size, scale=(0.8, 1.0)))
+        return image, mask
 
-        # Add resizing, tensor conversion, and normalization to the pipeline
-        self.transform_list.append(transforms.Resize(self.image_size))
-        self.transform_list.append(transforms.ToTensor())
-        self.transform_list.append(transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]))
 
-        self.gt_transform_list.append(transforms.Resize(self.image_size))
-        self.gt_transform_list.append(transforms.ToTensor())
+class AugmentedDataset(torch.utils.data.Dataset):
+    """
+    包装数据集类，确保图像和 mask 同时进行增强。
+    """
 
-        # Create composed transforms
-        self.img_transform = transforms.Compose(self.transform_list)
-        self.gt_transform = transforms.Compose(self.gt_transform_list)
+    def __init__(self, base_dataset, transform):
+        self.base_dataset = base_dataset
+        self.transform = transform
 
-    def apply(self, image, gt):
-        """
-        Apply the augmentations to both the image and ground truth.
+    def __len__(self):
+        return len(self.base_dataset)
 
-        :param image: Input image (PIL Image).
-        :param gt: Ground truth (PIL Image).
-        :return: Augmented image and ground truth.
-        """
-        # Ensure reproducibility by syncing random seeds
-        seed = random.randint(0, 2147483647)
-        random.seed(seed)
-        image = self.img_transform(image)
+    def __getitem__(self, idx):
+        # 获取原始数据
+        sample = self.base_dataset[idx]
 
-        random.seed(seed)
-        gt = self.gt_transform(gt)
+        image, label = sample
 
-        return image, gt
+        # 将图像和 mask 转换为 PIL 格式以应用变换
+        if isinstance(image, torch.Tensor):
+            image = to_pil_image(image)
 
+        # 应用同步增强
+        if self.transform:
+            image, label = self.transform(image, label)
+
+        # 转回 Tensor 格式
+        image = to_tensor(image)
+
+        return (image, label)

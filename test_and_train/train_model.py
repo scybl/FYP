@@ -71,7 +71,7 @@ if __name__ == "__main__":
 
             # 保存模型和日志
             if t % train_config["save_interval"] == 0:
-                torch.save(net.state_dict(), save_model_path + f"_{str(t / train_config['save_interval'])}.pth")
+                torch.save(net.state_dict(), save_model_path + f'_{str(t / train_config['save_interval'])}.pth')
                 # 将当前step的损失保存到日志文件
                 with open(loss_log_path, "a") as f:
                     f.write(f'{epochs},{i},{train_loss.item():.6f}\n')
@@ -85,7 +85,7 @@ if __name__ == "__main__":
             _out_image = _out_image.repeat(3, 1, 1)  # 重复 3 次通道，大小变为 [3, 256, 256]
 
             img = torch.stack([_image, _segment_image, _out_image], dim=0)
-            save_image(img, f"{config['save_image_path']}/{i}.png")
+            save_image(img, f'{config['save_image_path']}/{i}.png')
 
             # 打印训练信息，包括当前的 epoch，当前步骤索引和当前的训练损失及学习率
             print(

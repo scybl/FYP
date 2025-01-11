@@ -15,7 +15,7 @@ train_setting:
   lr: 0.001
   eta_min: 0.00001
   t_max: 25
-  epochs: 100
+  epochs: 1
   warmup_epochs: 10
   save_interval: 50
   dataset_name: "isic2018"
