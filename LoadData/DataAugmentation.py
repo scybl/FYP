@@ -2,6 +2,31 @@ import random
 import torch
 from torchvision.transforms.functional import to_tensor, to_pil_image
 
+import torchvision.transforms as transforms
+
+
+# 根据 augmentations 配置生成动态的 transforms
+def get_transforms(augmentations):
+    transforms_list = []
+    for aug in augmentations:
+        if aug["type"] == "RandomHorizontalFlip":
+            transforms_list.append(transforms.RandomHorizontalFlip(p=aug.get("p", 0.5)))
+        elif aug["type"] == "RandomRotation":
+            transforms_list.append(transforms.RandomRotation(degrees=aug.get("degrees", 15)))
+        elif aug["type"] == "Resize":
+            transforms_list.append(transforms.Resize(size=aug.get("size", (256, 256))))
+        elif aug["type"] == "ColorJitter":
+            transforms_list.append(transforms.ColorJitter(
+                brightness=aug.get("brightness", 0),
+                contrast=aug.get("contrast", 0),
+                saturation=aug.get("saturation", 0),
+                hue=aug.get("hue", 0)
+            ))
+        # 添加更多的变换类型...
+        else:
+            raise ValueError(f"Unsupported augmentation type: {aug['type']}")
+    return SynchronizedTransform(transforms_list)
+
 
 class SynchronizedTransform:
     """
@@ -34,7 +59,6 @@ class AugmentedDataset(torch.utils.data.Dataset):
     """
     包装数据集类，确保图像和 mask 同时进行增强。
     """
-
     def __init__(self, base_dataset, transform):
         self.base_dataset = base_dataset
         self.transform = transform

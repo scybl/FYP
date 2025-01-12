@@ -129,7 +129,7 @@ class SegmentationEvaluator:
                 best_dice = avg_dice
                 best_model = model_file
 
-        csv_path = os.path.join(self.config['model_path'], "evaluation_results.csv")
+        csv_path = os.path.join(self.config['model']['save_path'], "evaluation_results.csv")
         with open(csv_path, mode="w", newline="") as csv_file:
             writer = csv.DictWriter(csv_file,
                                     fieldnames=["model_file", "avg_loss", "avg_dice", "avg_iou", "avg_pixel_acc"])

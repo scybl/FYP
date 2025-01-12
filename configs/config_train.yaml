@@ -19,6 +19,7 @@ train_setting:
   warmup_epochs: 10
   save_interval: 50
   dataset_name: "isic2018"
+  augmentations: ["RandomHorizontalFlip", "RandomRotation", "Resize"]
 
 # 数据集公共配置
 datasets:
