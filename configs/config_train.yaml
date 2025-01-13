@@ -12,18 +12,52 @@ data_loader:
 
 # 训练配置
 train_setting:
+  dataset_name: "isic2018"
+  epochs: 1
+  save_interval: 50
   lr: 0.001
   eta_min: 0.00001
   t_max: 25
-  epochs: 1
   warmup_epochs: 10
-  save_interval: 50
-  dataset_name: "isic2018"
-  augmentations: ["RandomHorizontalFlip", "RandomRotation", "Resize"]
+
 
 # 数据集公共配置
+# 由于不同数据可能会使用不同的增强方式
+# 所以将增强的定义放在这里管理
 datasets:
   isic2018:
+    size: 256
+    class_num: 1
+    dataset_path: "LoadData"
+    img_prefix: "ISIC_"
+    seg_prefix: "ISIC_"
+    img_suffix: ".jpg"
+    seg_suffix: "_segmentation.png"
+    img: "isic2018/train/img"
+    mask: "isic2018/train/mask"
+    "augmentations": [
+      { "type": "RandomHorizontalFlip", "p": 0.5 },
+      { "type": "RandomRotation", "degrees": 30 },
+      { "type": "Resize", "size": [ 128, 128 ] },
+      {
+        "type": "ColorJitter",
+        "brightness": [ 0.8, 1.5 ],
+        "contrast": 0.2,
+        "saturation": 0.3,
+        "hue": 0.05
+      }
+    ]
+  isic2020:
+    size: 256
+    class_num: 1
+    dataset_path: "LoadData"
+    img_prefix: "ISIC_"
+    seg_prefix: "ISIC_"
+    img_suffix: ".jpg"
+    seg_suffix: "_segmentation.png"
+    img: "isic2020/train/img"
+    mask: "isic2020/train/mask"
+  DRIVE:
     size: 256
     class_num: 1
     dataset_path: "LoadData"

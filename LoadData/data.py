@@ -1,16 +1,7 @@
 import os
 from builtins import print
-
-from torch.utils.data import Dataset, DataLoader
-import torchvision.transforms as transforms
-from PIL import Image
-
-from LoadData.DataAugmentation import AugmentedDataset, SynchronizedTransform, get_transforms
-
-# 定义图像和标签的变换
-transform_image = transforms.Compose([
-    transforms.ToTensor()
-])  # 图像转换为张量
+from torch.utils.data import DataLoader
+from LoadData.ISIC2018 import ISIC2018_DataSet, transform_image, get_transforms, AugmentedDataset
 
 
 class LabelProcessor:
@@ -38,51 +29,6 @@ class LabelProcessor:
         return label
 
 
-# 保持图像大小的打开方法
-def keep_image_size_open(file_path, size):
-    image = Image.open(file_path).convert('RGB')  # 强制为 RGB 格式
-    image = image.resize(size, Image.BILINEAR)
-    return image
-
-
-class MyDataset(Dataset):
-    """
-    自定义数据集，加载图像和对应的标签
-    """
-
-    def __init__(self, config, _transform_image=None, transform_label=None, class_num=1):
-        self.config = config
-        self.mask_name = os.listdir(os.path.join(self.config["dataset_path"], self.config["mask"]))
-        self.transform_image = _transform_image
-        self.transform_label = transform_label
-        self.class_num = class_num
-
-    def __len__(self):
-        return len(self.mask_name)
-
-    def __getitem__(self, index):
-        # 获取掩膜文件名和路径
-        segment_name = self.mask_name[index]
-        segment_path = os.path.join(self.config["dataset_path"], self.config['mask'], segment_name)
-
-        # 根据掩膜文件名生成图像文件名
-        image_name = segment_name.replace(self.config["seg_prefix"], self.config["img_prefix"]).replace(
-            self.config["seg_suffix"], self.config["img_suffix"])
-        image_path = os.path.join(self.config["dataset_path"], self.config["img"], image_name)
-
-        # 加载图像和标签
-        segment_image = keep_image_size_open(segment_path, (self.config["size"], self.config["size"]))
-        img_image = keep_image_size_open(image_path, (self.config["size"], self.config["size"]))
-
-        # 应用图像和标签的变换
-        if self.transform_image:
-            img_image = self.transform_image(img_image)
-        if self.transform_label:
-            segment_image = self.transform_label(transform_image(segment_image))
-
-        return img_image, segment_image
-
-
 def get_dataset(config, mode):
     """
     通用数据加载器函数，用于获取训练或测试数据加载器。
@@ -97,13 +43,13 @@ def get_dataset(config, mode):
         batch_size = config["data_loader"]["batch_size"]
         shuffle = config["data_loader"]["shuffle"]
         num_workers = config["data_loader"]["num_workers"]
-        augmentations = config["train_setting"]["augmentations"]
+        augmentations = config["datasets"][dataset_name]["augmentations"]
     elif mode == "test":
         dataset_name = config["test_setting"]["dataset_name"]
         dataset_config = config["datasets"][dataset_name]
         batch_size = config.get("batch_size", 1)  # 默认值为1，防止遗漏配置
         shuffle = config.get("shuffle", False)  # 测试集一般不打乱数据
-        num_workers = config.get("num_workers", 4)  # 默认值为4
+        num_workers = config.get("num_workers", 16)  # 默认值为4
         augmentations = []
     else:
         raise ValueError(f"Unsupported mode '{mode}'. Use 'train' or 'test'.")
@@ -114,7 +60,7 @@ def get_dataset(config, mode):
     class_num = dataset_config.get("class_num", 1)
 
     # 初始化数据集
-    dataset = MyDataset(
+    dataset = ISIC2018_DataSet(
         dataset_config,
         _transform_image=transform_image,
         transform_label=LabelProcessor(class_num=class_num),

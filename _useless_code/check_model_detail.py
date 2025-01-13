@@ -12,7 +12,7 @@ from model_defination.model_loader import load_model_test
 # Create the model and generate a dummy input
 
 CONFIG_NAME = "config_train.yaml"
-CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
+CONFIG_PATH = os.path.join("../configs/", CONFIG_NAME)
 config = load_config(CONFIG_PATH)
 
 model = load_model_test(config)
