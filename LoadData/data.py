@@ -69,7 +69,6 @@ def get_dataset(config, mode):
     dataset = dataset_class(
         dataset_config,
         augmentations,
-        transform_label=LabelProcessor(class_num=class_num),
         class_num=class_num
     )
 

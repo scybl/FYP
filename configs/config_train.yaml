@@ -35,25 +35,19 @@ datasets:
     seg_suffix: "_segmentation.png"
     img: "isic2018/train/img"
     mask: "isic2018/train/mask"
-    "augmentations": [
-      "geometric_transforms": {
-        {
-          type: "RandomHorizontalFlip",
-          p: 0.5
-        },
-        {
-          type: "RandomRotation",
-          degree: 30
-        },
-
-      },
-      "color_transforms": {
-        "brightness": [ 0.8, 1.5 ],
-        "contrast": 0.2,
-        "saturation": 0.3,
-        "hue": 0.05
-      }
-    ]
+    "augmentations": {
+      "geometric_transforms": [
+        { "type": "RandomHorizontalFlip", "params": { "p": 0.5 } },
+        { "type": "RandomRotation", "params": { "degree": 30 } },
+        { "type": "Resize", "params": { "size": [256, 256] } }
+      ],
+      "color_transforms": [
+        { "type": "brightness", "params": { "degree": [0.8, 1.5] } },
+        { "type": "contrast", "params": { "degree": 0.2 } },
+        { "type": "saturation", "params": { "degree": 0.3 } },
+        { "type": "hue", "params": { "degree": 0.05 } }
+      ]
+    }
   isic2020:
     size: 256
     class_num: 1
