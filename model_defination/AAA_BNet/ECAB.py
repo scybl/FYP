@@ -7,51 +7,52 @@ class ECAB(nn.Module):
         super(ECAB, self).__init__()
         reduced_channels = channels // reduction_ratio
 
-        # AMP Path (Global Average Pooling)
+        # AMP 路径（全局平均池化）
         self.AMP = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),  # Global Average Pooling (C, H, W) -> (C, 1, 1)
-            nn.Conv2d(channels, reduced_channels, 1),  # Conv 1x1: (C, 1, 1) -> (C/r, 1, 1)
-            nn.ReLU(inplace=True),  # ReLU Activation
-            nn.Dropout(p=dropout_rate),  # Dropout layer
-            nn.Conv2d(reduced_channels, channels, 1)  # Conv 1x1: (C/r, 1, 1) -> (C, 1, 1)
+            nn.AdaptiveAvgPool2d(1),  # 全局平均池化 (C, H, W) -> (C, 1, 1)
+            nn.Conv2d(channels, reduced_channels, 1),  # 1x1 卷积: (C, 1, 1) -> (C/r, 1, 1)
+            nn.ReLU(inplace=True),  # ReLU 激活函数
+            nn.Dropout(p=dropout_rate),  # Dropout 层
+            nn.Conv2d(reduced_channels, channels, 1)  # 1x1 卷积: (C/r, 1, 1) -> (C, 1, 1)
         )
 
-        # APP Path (Global Max Pooling)
+        # APP 路径（全局最大池化）
         self.APP = nn.Sequential(
-            nn.AdaptiveMaxPool2d(1),  # Global Max Pooling (C, H, W) -> (C, 1, 1)
-            nn.Conv2d(channels, reduced_channels, 1),  # Conv 1x1: (C, 1, 1) -> (C/r, 1, 1)
-            nn.ReLU(inplace=True),  # ReLU Activation
-            nn.Dropout(p=dropout_rate),  # Dropout layer
-            nn.Conv2d(reduced_channels, channels, 1)  # Conv 1x1: (C/r, 1, 1) -> (C, 1, 1)
+            nn.AdaptiveMaxPool2d(1),  # 全局最大池化 (C, H, W) -> (C, 1, 1)
+            nn.Conv2d(channels, reduced_channels, 1),  # 1x1 卷积: (C, 1, 1) -> (C/r, 1, 1)
+            nn.ReLU(inplace=True),  # ReLU 激活函数
+            nn.Dropout(p=dropout_rate),  # Dropout 层
+            nn.Conv2d(reduced_channels, channels, 1)  # 1x1 卷积: (C/r, 1, 1) -> (C, 1, 1)
         )
 
-        # Spatial H * W Convolution Path
+        # 空间 H * W 卷积路径
         self.layer3 = nn.Sequential(
-            nn.Conv2d(channels, reduced_channels, 1),  # Conv 1x1: (C, H, W) -> (C/r, H, W)
-            nn.ReLU(inplace=True),  # ReLU Activation
-            nn.Dropout(p=dropout_rate),  # Dropout layer
-            nn.Conv2d(reduced_channels, channels, 1)  # Conv 1x1: (C/r, H, W) -> (C, H, W)
+            nn.Conv2d(channels, reduced_channels, 1),  # 1x1 卷积: (C, H, W) -> (C/r, H, W)
+            nn.ReLU(inplace=True),  # ReLU 激活函数
+            nn.Dropout(p=dropout_rate),  # Dropout 层
+            nn.Conv2d(reduced_channels, channels, 1)  # 1x1 卷积: (C/r, H, W) -> (C, H, W)
         )
 
-        # Sigmoid activation for attention scaling
+        # **新增：可学习参数**
+        self.weights = nn.Parameter(torch.ones(3))  # 初始化三个路径的权重
+
+        # Sigmoid 激活函数用于计算注意力缩放因子
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        # Compute AMP attention
-        amp_out = self.AMP(x)
+        amp_out = self.AMP(x)  # 计算 AMP 注意力
+        app_out = self.APP(x)  # 计算 APP 注意力
+        hw_out = self.layer3(x)  # 计算空间 H * W 卷积注意力
 
-        # Compute APP attention
-        app_out = self.APP(x)
+        # **使用 softmax 归一化可学习参数**
+        weight = torch.softmax(self.weights, dim=0)  # 归一化权重，确保总和为 1
 
-        # Compute spatial H * W convolution attention
-        hw_out = self.layer3(x)
+        # **动态调整路径比重**
+        combined = weight[0] * amp_out + weight[1] * app_out + weight[2] * hw_out
 
-        # Combine all three paths
-        combined = amp_out + app_out + hw_out
-
-        # Apply sigmoid to compute the scaling factor
+        # 通过 Sigmoid 计算缩放因子
         scale = self.sigmoid(combined)
 
-        # Scale the input by the attention map
+        # 通过注意力映射对输入进行缩放
         out = x * scale
         return out

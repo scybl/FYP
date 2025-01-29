@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 from model_defination.AAA_BNet.ECAB import ECAB
 from model_defination.AAA_BNet.ESAB import ESAB
@@ -40,6 +39,9 @@ class PHAM(nn.Module):
             nn.Dropout(p=dropout),  # Dropout layer
         )
 
+        # **新增：可学习参数**
+        self.weights = nn.Parameter(torch.ones(3))  # 初始化三个分支的权重
+
     @staticmethod
     def channel_shuffle(x, groups):
         """
@@ -70,8 +72,11 @@ class PHAM(nn.Module):
         out2 = self.conv3xLayer(combined)
         out3 = self.conv5xLayer(combined)
 
-        # 分支结果相加
-        out = out1 + out2 + out3
+        # **使用 softmax 归一化可学习参数**
+        weight = torch.softmax(self.weights, dim=0)  # 归一化，确保总和为 1
+
+        # **动态调整各分支比重**
+        out = weight[0] * out1 + weight[1] * out2 + weight[2] * out3
 
         # 通道打乱
         out = self.channel_shuffle(out, groups=2)
