@@ -8,12 +8,12 @@ save_image_path: "saved_images"  # save the predicted pic
 data_loader:
   batch_size: 8
   shuffle: true
-  num_workers: 1
+  num_workers: 16
 
 # 训练配置
 train_setting:
   dataset_name: "isic2018"
-  epochs: 1
+  epochs: 100
   save_interval: 50
   lr: 0.001
   eta_min: 0.00001

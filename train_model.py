@@ -1,10 +1,12 @@
 import os
-from torch import optim
+
+import torch
+
 from LoadData.data import get_dataset
 from LoadData.utils import load_config
-import torch
-import torch.nn as nn
 from model_defination.model_loader import load_model
+from torch import optim
+import torch.nn as nn
 
 
 def print_tensor_size(name, tensor):
