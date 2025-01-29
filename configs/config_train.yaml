@@ -8,7 +8,7 @@ save_image_path: "saved_images"  # save the predicted pic
 data_loader:
   batch_size: 8
   shuffle: true
-  num_workers: 16
+  num_workers: 1
 
 # 训练配置
 train_setting:
@@ -36,11 +36,18 @@ datasets:
     img: "isic2018/train/img"
     mask: "isic2018/train/mask"
     "augmentations": [
-      { "type": "RandomHorizontalFlip", "p": 0.5 },
-      { "type": "RandomRotation", "degrees": 30 },
-      { "type": "Resize", "size": [ 128, 128 ] },
-      {
-        "type": "ColorJitter",
+      "geometric_transforms": {
+        {
+          type: "RandomHorizontalFlip",
+          p: 0.5
+        },
+        {
+          type: "RandomRotation",
+          degree: 30
+        },
+
+      },
+      "color_transforms": {
         "brightness": [ 0.8, 1.5 ],
         "contrast": 0.2,
         "saturation": 0.3,

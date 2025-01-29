@@ -1,7 +1,6 @@
-import os
-from builtins import print
+from LoadData.ISIC2018 import ISIC2018_DataSet
+from LoadData.ISIC2020 import ISIC2020_DataSet
 from torch.utils.data import DataLoader
-from LoadData.ISIC2018 import ISIC2018_DataSet, transform_image, get_transforms, AugmentedDataset
 
 
 class LabelProcessor:
@@ -37,43 +36,44 @@ def get_dataset(config, mode):
     :param mode: 数据模式，"train" 或 "test"，决定加载训练或测试数据。
     :return: 数据加载器 (DataLoader) 对象。
     """
-    if mode == "train":
-        dataset_name = config["train_setting"]["dataset_name"]
-        dataset_config = config["datasets"][dataset_name]
-        batch_size = config["data_loader"]["batch_size"]
-        shuffle = config["data_loader"]["shuffle"]
-        num_workers = config["data_loader"]["num_workers"]
-        augmentations = config["datasets"][dataset_name]["augmentations"]
-    elif mode == "test":
-        dataset_name = config["test_setting"]["dataset_name"]
-        dataset_config = config["datasets"][dataset_name]
-        batch_size = config.get("batch_size", 1)  # 默认值为1，防止遗漏配置
-        shuffle = config.get("shuffle", False)  # 测试集一般不打乱数据
-        num_workers = config.get("num_workers", 16)  # 默认值为4
-        augmentations = []
-    else:
+    if mode not in ["train", "test"]:
         raise ValueError(f"Unsupported mode '{mode}'. Use 'train' or 'test'.")
+
+    is_train = mode == "train"
+
+    # 选择不同模式下的 dataset_name
+    dataset_name = config["train_setting"]["dataset_name"] if is_train else config["test_setting"]["dataset_name"]
+
+    # 如果数据集是 ISIC2018，加载特定数据集
+    if dataset_name.lower() == "isic2018":
+        dataset_class = ISIC2018_DataSet
+    elif dataset_name == "isic2020":
+        dataset_class = ISIC2020_DataSet
+    else:
+        raise ValueError(f"Dataset '{dataset_name}' is not supported.")
+
+    dataset_config = config["datasets"][dataset_name]
+
+    batch_size = config["data_loader"]["batch_size"] if is_train else config["batch_size"]
+    shuffle = config["data_loader"]["shuffle"] if is_train else config["shuffle"]
+    num_workers = config["data_loader"]["num_workers"] if is_train else config["num_workers"]
+
+    augmentations = dataset_config["augmentations"] if is_train else []  # 如果是test mode则不需要增强
 
     print(f"Loading {mode} dataset: {dataset_name}")
 
     # 获取数据集的 class_num
-    class_num = dataset_config.get("class_num", 1)
+    class_num = dataset_config["class_num"]
 
-    # 初始化数据集
-    dataset = ISIC2018_DataSet(
+    # 初始化 ISIC2018 数据集
+    dataset = dataset_class(
         dataset_config,
-        _transform_image=transform_image,
+        augmentations,
         transform_label=LabelProcessor(class_num=class_num),
         class_num=class_num
     )
 
-    # 这是基础变换，后面还要加新的变换方式
-    transform = get_transforms(augmentations)
-
-    dataset = AugmentedDataset(base_dataset=dataset, transform=transform)
+    print(f"{dataset.__len__()}")
 
     # 返回数据加载器
-    return DataLoader(dataset,
-                      batch_size=batch_size,
-                      shuffle=shuffle,
-                      num_workers=num_workers)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)

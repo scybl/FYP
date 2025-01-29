@@ -1,13 +1,10 @@
 import os
 from torch import optim
-from torchvision.utils import save_image
 from LoadData.data import get_dataset
 from LoadData.utils import load_config
 import torch
 import torch.nn as nn
-
 from model_defination.model_loader import load_model
-from test_and_train.cosineannealingLR import CosineAnnealingLR
 
 
 def print_tensor_size(name, tensor):
@@ -30,21 +27,21 @@ if __name__ == "__main__":
     opt = optim.Adam(net.parameters(), lr=train_config['lr'])
     loss_fn = nn.BCEWithLogitsLoss()
 
-    # load data
+    # 加载数据
     data_loader = get_dataset(config, 'train')
     save_model_path = os.path.join(config['model']["save_path"], config["model"]['name'])
 
-    # 使用余弦退火调度器
+    # 余弦退火调度器 (更新学习率的周期 T_max 设为总 epoch 数)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(
         optimizer=opt,
-        T_max=train_config['t_max'],  # 设置余弦退火周期
+        T_max=train_config['epochs'],  # 以 epoch 为单位
         eta_min=train_config['eta_min']  # 最小学习率
     )
 
     # 日志路径
-    loss_log_path = os.path.join(config['model']['save_path'], ('train_loss_log_' + f"{config['model']['name']}" + ".csv"))
+    loss_log_path = os.path.join(config['model']['save_path'], f"train_loss_log_{config['model']['name']}.csv")
     with open(loss_log_path, "w") as f:
-        f.write("epoch,step,train_loss\n")  # 写入CSV文件的表头
+        f.write("epoch,step,train_loss\n")  # 记录表头
 
     epochs = 1
     t = 1
@@ -52,24 +49,29 @@ if __name__ == "__main__":
         for i, (image, segment_image) in enumerate(data_loader):
             image, segment_image = image.to(device), segment_image.to(device)
 
-            # 前向传播、损失计算、反向传播和优化步骤
-            out_image = net(image)  # 网络预测
-            train_loss = loss_fn(out_image, segment_image)  # 计算损失
-            opt.zero_grad()  # 清空梯度
-            train_loss.backward()  # 反向传播
-            opt.step()  # 更新模型权重
+            # 前向传播、计算损失、反向传播、优化
+            out_image = net(image)
+            train_loss = loss_fn(out_image, segment_image)
 
-            # 更新学习率
-            scheduler.step()
+            opt.zero_grad()
+            train_loss.backward()
+            opt.step()
 
-            # 保存模型和日志
-            if t % train_config["save_interval"] == 0:
-                torch.save(net.state_dict(), save_model_path + f'_{str(t / train_config["save_interval"])}.pth')
-                with open(loss_log_path, "a") as f:
-                    f.write(f'{epochs},{i},{train_loss.item():.6f}\n')
+            # 保存日志 (每个 batch 记录一次)
+            with open(loss_log_path, "a") as f:
+                f.write(f"{epochs},{i},{train_loss.item():.6f}\n")
 
             # 打印训练信息
             current_lr = opt.param_groups[0]['lr']
-            print(f"Epoch {epochs} --- Step: {i} --- Train Loss: {train_loss.item()} --- Learning Rate: {current_lr:.6f}")
+            print(f"Epoch {epochs} --- Step {i} --- Loss: {train_loss.item():.6f} --- LR: {current_lr:.6f}")
+
+            # 保存模型 (按 save_interval)
+            if t % train_config["save_interval"] == 0:
+                torch.save(net.state_dict(), f"{save_model_path}_{t // train_config['save_interval']}.pth")
+
             t += 1
+
+
+        # **在 epoch 级更新学习率**
+        scheduler.step()
         epochs += 1
