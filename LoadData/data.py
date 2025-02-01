@@ -39,10 +39,8 @@ def get_dataset(config, mode):
     if mode not in ["train", "test"]:
         raise ValueError(f"Unsupported mode '{mode}'. Use 'train' or 'test'.")
 
-    is_train = mode == "train"
-
     # 选择不同模式下的 dataset_name
-    dataset_name = config["train_setting"]["dataset_name"] if is_train else config["test_setting"]["dataset_name"]
+    dataset_name = config["train_setting"]["dataset_name"] if mode=="train" else config["test_setting"]["dataset_name"]
 
     # 如果数据集是 ISIC2018，加载特定数据集
     if dataset_name.lower() == "isic2018":
@@ -53,13 +51,13 @@ def get_dataset(config, mode):
         raise ValueError(f"Dataset '{dataset_name}' is not supported.")
 
     dataset_config = config["datasets"][dataset_name]
+    print(config)
+    batch_size = config["data_loader"]["batch_size"]
+    shuffle = config["data_loader"]["shuffle"]
+    num_workers = config["data_loader"]["num_workers"]
 
-    batch_size = config["data_loader"]["batch_size"] if is_train else config["batch_size"]
-    shuffle = config["data_loader"]["shuffle"] if is_train else config["shuffle"]
-    num_workers = config["data_loader"]["num_workers"] if is_train else config["num_workers"]
-
-    augmentations = dataset_config["augmentations"] if is_train else []  # 如果是test mode则不需要增强
-
+    augmentations = dataset_config["augmentations"] if mode == "train" else {}  # 如果是test mode则不需要增强
+    print(augmentations)
     print(f"Loading {mode} dataset: {dataset_name}")
 
     # 获取数据集的 class_num

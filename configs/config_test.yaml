@@ -22,17 +22,12 @@ datasets:
     seg_suffix: "_segmentation.png"
     img: "isic2018/test/img"
     mask: "isic2018/test/mask"
-    "augmentations": [
-      { "type": "RandomHorizontalFlip", "p": 0.5 },
-      { "type": "RandomRotation", "degrees": 30 },
-      { "type": "Resize", "size": [ 128, 128 ] },
-      {
-        "type": "ColorJitter",
-        "brightness": [ 0.8, 1.5 ],
-        "contrast": 0.2,
-        "saturation": 0.3,
-        "hue": 0.05
-      }
+    augmentations: {
+      "geometric_transforms": [
+      ],
+      "color_transforms": [
+      ]
+    }
 
 
 # 测试配置

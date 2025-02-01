@@ -35,7 +35,7 @@ datasets:
     seg_suffix: "_segmentation.png"
     img: "isic2018/train/img"
     mask: "isic2018/train/mask"
-    "augmentations": {
+    augmentations: {
       "geometric_transforms": [
         { "type": "RandomHorizontalFlip", "params": { "p": 0.5 } },
         { "type": "RandomRotation", "params": { "degree": 30 } },
