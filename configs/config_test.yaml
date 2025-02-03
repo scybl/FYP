@@ -4,6 +4,11 @@ model:
   save_path: "params/"  # weight saving path
 save_image_path: "saved_images"  # save the predicted pic
 
+# 测试配置
+test_setting:
+  seed: 1234
+  dataset_name: "isic2018"
+
 # 数据加载器配置
 data_loader:
   batch_size: 8
@@ -24,13 +29,8 @@ datasets:
     mask: "isic2018/test/mask"
     augmentations: {
       "geometric_transforms": [
+        { "type": "Resize", "params": { "size": [256, 256] } }
       ],
       "color_transforms": [
       ]
     }
-
-
-# 测试配置
-test_setting:
-  seed: 1234
-  dataset_name: "isic2018"

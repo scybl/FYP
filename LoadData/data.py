@@ -56,7 +56,7 @@ def get_dataset(config, mode):
     shuffle = config["data_loader"]["shuffle"]
     num_workers = config["data_loader"]["num_workers"]
 
-    augmentations = dataset_config["augmentations"] if mode == "train" else {}  # 如果是test mode则不需要增强
+    augmentations = dataset_config["augmentations"]
     print(augmentations)
     print(f"Loading {mode} dataset: {dataset_name}")
 
