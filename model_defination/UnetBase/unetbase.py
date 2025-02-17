@@ -82,8 +82,7 @@ class UNetBase(nn.Module):
 
 
         self.out = nn.Sequential(
-                    nn.Conv2d(64, class_num, 3, 1, 1),
-                    nn.Sigmoid()  # 使用sigmoid进行二分
+                    nn.Conv2d(64, class_num, 3, 1, 1)
         )
 
     def forward(self, x):

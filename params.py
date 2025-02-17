@@ -21,6 +21,7 @@ elif model_name == "UNet":
     model = UNetBase()
     model.load_state_dict(torch.load("params/unet0_1.pth", map_location=torch.device('cpu')))
 
+
 # 计算参数数量
 num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
 print(f"Total Parameters in {model_name}: {num_params} ({num_params / 1e6:.2f}M)")
