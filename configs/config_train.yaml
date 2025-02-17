@@ -1,6 +1,6 @@
 device: "cuda"  # cpu/ cuda
 model:
-  name: "bnet"
+  name: "unet0"
   save_path: "params/"  # weight saving path
 save_image_path: "saved_images"  # save the predicted pic
 

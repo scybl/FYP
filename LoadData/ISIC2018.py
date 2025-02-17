@@ -49,5 +49,4 @@ class ISIC2018_DataSet(Dataset):
         # **转换为 Tensor**
         img_image = self.to_tensor(img_image)  # 变为 (3, H, W)
         segment_image = self.to_tensor(segment_image)  # **变为 (1, H, W)，避免通道不匹配**
-        print(f"DEBUG: image shape = {img_image.shape}, mask shape = {segment_image.shape}")
         return img_image, segment_image
