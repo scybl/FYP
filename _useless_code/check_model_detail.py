@@ -2,7 +2,6 @@ import os
 
 from torchviz import make_dot
 import torch
-import torch.nn as nn
 
 from LoadData.utils import load_config
 from model_defination.model_loader import load_model_test
