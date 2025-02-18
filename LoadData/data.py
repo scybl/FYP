@@ -1,5 +1,4 @@
 from LoadData.ISIC2018 import ISIC2018_DataSet
-from LoadData.ISIC2020 import ISIC2020_DataSet
 from torch.utils.data import DataLoader
 
 
@@ -45,8 +44,7 @@ def get_dataset(config, mode):
     # 如果数据集是 ISIC2018，加载特定数据集
     if dataset_name.lower() == "isic2018":
         dataset_class = ISIC2018_DataSet
-    elif dataset_name == "isic2020":
-        dataset_class = ISIC2020_DataSet
+        
     else:
         raise ValueError(f"Dataset '{dataset_name}' is not supported.")
 

@@ -27,7 +27,7 @@ if __name__ == "__main__":
     train_config = config["train_setting"]
     net = load_model(config, 'train')
     opt = optim.Adam(net.parameters(), lr=train_config['lr'])
-    loss_fn = nn.BCEWithLogitsLoss()
+    loss_fn = nn.CrossEntropyLoss() #换成cross entropy损失，保证多目标可以使用
 
     # 加载数据
     data_loader = get_dataset(config, 'train')

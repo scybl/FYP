@@ -1,6 +1,6 @@
 device: "cuda"  # cpu/ cuda
 model:
-  name: "unet0"
+  name: "bnet"
   save_path: "params/"  # weight saving path
 save_image_path: "saved_images"  # save the predicted pic
 
@@ -42,10 +42,6 @@ datasets:
         { "type": "Resize", "params": { "size": [256, 256] } }
       ],
       "color_transforms": [
-        { "type": "brightness", "params": { "degree": [0.8, 1.5] } },
-        { "type": "contrast", "params": { "degree": 0.2 } },
-        { "type": "saturation", "params": { "degree": 0.3 } },
-        { "type": "hue", "params": { "degree": 0.05 } }
       ]
     }
   isic2020:
