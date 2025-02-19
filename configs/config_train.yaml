@@ -14,7 +14,7 @@ data_loader:
 
 # 训练配置
 train_setting:
-  dataset_name: "kvasir"
+  dataset_name: "isic2018"
   epochs: 100
   save_interval: 50
   lr: 0.001

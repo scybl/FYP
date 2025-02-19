@@ -1,10 +1,5 @@
 import os
-
-import torchvision.utils as vutils
-
-from PIL import Image
 import torch
-import numpy as np
 from LoadData.data import get_dataset
 from LoadData.utils import load_config
 from model_defination.model_loader import load_model
@@ -48,15 +43,12 @@ if __name__ == "__main__":
         for i, (image, segment_image) in enumerate(data_loader):
             image, segment_image = image.to(device), segment_image.to(device)
 
-            # 确保 segment_image 是 LongTensor 且 shape 正确
-            segment_image = segment_image.squeeze(1).long()
-
             # 前向传播
-            out_image = net(image)  # 不能加 softmax
+            out_image = net(image)
 
             # 打印调试信息
-            print(f"segment_image dtype: {segment_image.dtype}, unique values: {segment_image.unique()}")
-            print(f"out_image shape: {out_image.shape}, segment_image shape: {segment_image.shape}")
+            print(f"segment_image dtype: {segment_image.dtype}, unique values: {segment_image.shape}")
+            print(f"out_image shape: {out_image.shape}, out_image shape: {out_image.shape}")
 
             # 计算损失
             train_loss = loss_fn(out_image, segment_image)
