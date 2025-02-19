@@ -5,12 +5,12 @@ saved_images/
 params/
 paper/
 isic2018/
-isic2020/
 DRIVE/
 ACDC/
-
+Kvasir-SEG/
 
 
 output.txt
 .DS_Store
+
 

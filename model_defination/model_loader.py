@@ -5,7 +5,7 @@ from glob import glob
 from LoadData.utils import load_config
 from model_defination.AAA_BNet.BNet import BNet
 from model_defination.ResNet.resnet import ResNet101, ResNet50, ResNet152
-from model_defination.UnetBase.unetbase import UNetBase
+from model_defination.AAA_Unet.unetbase import UNetBase
 from model_defination.fcn_8s.fnc_8s import FCN8s
 from model_defination.unetpp.unetpp import UnetPP
 

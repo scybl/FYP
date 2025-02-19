@@ -1,6 +1,6 @@
 import torch
 
-from model_defination.UnetBase.unetbase import UNetBase
+from model_defination.AAA_Unet.unetbase import UNetBase
 from model_defination.AAA_BNet.BNet import BNet
 
 

@@ -8,14 +8,6 @@ from model_defination.model_loader import load_model
 from torch import optim
 import torch.nn as nn
 
-
-def print_tensor_size(name, tensor):
-    if tensor is None:
-        print(f"{name}: Tensor is None")
-    else:
-        print(f"{name}: Size: {tensor.size()}, Device: {tensor.device}")
-
-
 # load the config file
 CONFIG_NAME = "config_train.yaml"
 CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
@@ -27,7 +19,7 @@ if __name__ == "__main__":
     train_config = config["train_setting"]
     net = load_model(config, 'train')
     opt = optim.Adam(net.parameters(), lr=train_config['lr'])
-    loss_fn = nn.CrossEntropyLoss() #换成cross entropy损失，保证多目标可以使用
+    loss_fn = nn.CrossEntropyLoss()  # 换成cross entropy损失，保证多目标可以使用
 
     # 加载数据
     data_loader = get_dataset(config, 'train')
@@ -57,7 +49,7 @@ if __name__ == "__main__":
 
             opt.zero_grad()
             train_loss.backward()
-            opt.step()
+            opt.step() # 调用学习率
 
             # 保存日志 (每个 batch 记录一次)
             with open(loss_log_path, "a") as f:
@@ -72,7 +64,6 @@ if __name__ == "__main__":
                 torch.save(net.state_dict(), f"{save_model_path}_{t // train_config['save_interval']}.pth")
 
             t += 1
-
 
         # **在 epoch 级更新学习率**
         scheduler.step()

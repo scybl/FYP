@@ -49,19 +49,18 @@ def get_dataset(config, mode):
         raise ValueError(f"Dataset '{dataset_name}' is not supported.")
 
     dataset_config = config["datasets"][dataset_name]
-    print(config)
     batch_size = config["data_loader"]["batch_size"]
     shuffle = config["data_loader"]["shuffle"]
     num_workers = config["data_loader"]["num_workers"]
 
     augmentations = dataset_config["augmentations"]
-    print(augmentations)
+
     print(f"Loading {mode} dataset: {dataset_name}")
 
     # 获取数据集的 class_num
     class_num = dataset_config["class_num"]
 
-    # 初始化 ISIC2018 数据集
+    # 初始化数据集
     dataset = dataset_class(
         dataset_config,
         augmentations,
@@ -70,5 +69,7 @@ def get_dataset(config, mode):
 
     print(f"{dataset.__len__()}")
 
+    data_all = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+
     # 返回数据加载器
-    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+    return data_all

@@ -42,47 +42,42 @@ class UNetBase(nn.Module):
         self.d4 = DownSample(512)
 
         self.layer5 = nn.Sequential(
-                    ConvBlock(512, 1024, 3, 1, 1, "reflect", False, 0.3),
-                    ConvBlock(1024, 1024, kernel_size=3, stride=1, padding=1, padding_mode='reflect', 
-                              bias=False, dropout_rate=0.3)
+            ConvBlock(512, 1024, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock(1024, 1024, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+                      bias=False, dropout_rate=0.3)
         )
-
 
         # -------开始上采样
         self.up1 = UpSample(1024)
         self.layer6 = nn.Sequential(
-                    ConvBlock(1024, 512, 3, 1, 1, "reflect", False, 0.3),
-                    ConvBlock(512, 512, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
-                              bias=False, dropout_rate=0.3)
+            ConvBlock(1024, 512, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock(512, 512, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+                      bias=False, dropout_rate=0.3)
         )
-
 
         self.up2 = UpSample(512)
         self.layer7 = nn.Sequential(
-                    ConvBlock(512, 256, 3, 1, 1, "reflect", False, 0.3),
-                    ConvBlock(256, 256, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
-                               bias=False, dropout_rate=0.3)
+            ConvBlock(512, 256, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock(256, 256, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+                      bias=False, dropout_rate=0.3)
         )
-
 
         self.up3 = UpSample(256)
         self.layer8 = nn.Sequential(
-                    ConvBlock(256, 128, 3, 1, 1, "reflect", False, 0.3),
-                    ConvBlock(128, 128, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
-                               bias=False, dropout_rate=0.3)
+            ConvBlock(256, 128, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock(128, 128, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+                      bias=False, dropout_rate=0.3)
         )
-
 
         self.up4 = UpSample(128)
         self.layer9 = nn.Sequential(
-                    ConvBlock(128, 64, 3, 1, 1, "reflect", False, 0.3),
-                    ConvBlock(64, 64, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
-                               bias=False, dropout_rate=0.3)
+            ConvBlock(128, 64, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock(64, 64, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+                      bias=False, dropout_rate=0.3)
         )
 
-
         self.out = nn.Sequential(
-                    nn.Conv2d(64, class_num, 3, 1, 1)
+            nn.Conv2d(64, class_num, 3, 1, 1)
         )
 
     def forward(self, x):
