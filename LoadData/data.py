@@ -1,6 +1,8 @@
-from LoadData.ISIC2018 import ISIC2018_DataSet
+
 from torch.utils.data import DataLoader
 
+from LoadData.Kvasir_SEG import Kvasir_SEG_DataSet
+from LoadData.ISIC2018 import ISIC2018_DataSet
 
 class LabelProcessor:
     """
@@ -44,6 +46,8 @@ def get_dataset(config, mode):
     # 如果数据集是 ISIC2018，加载特定数据集
     if dataset_name.lower() == "isic2018":
         dataset_class = ISIC2018_DataSet
+    elif dataset_name.lower() == "kvasir":
+        dataset_class = Kvasir_SEG_DataSet
         
     else:
         raise ValueError(f"Dataset '{dataset_name}' is not supported.")

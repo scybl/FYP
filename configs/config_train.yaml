@@ -2,6 +2,8 @@ device: "cuda"  # cpu/ cuda
 model:
   name: "bnet"
   save_path: "params/"  # weight saving path
+
+save_pic: True
 save_image_path: "saved_images"  # save the predicted pic
 
 # 数据加载器配置
@@ -12,7 +14,7 @@ data_loader:
 
 # 训练配置
 train_setting:
-  dataset_name: "isic2018"
+  dataset_name: "kvasir"
   epochs: 100
   save_interval: 50
   lr: 0.001
@@ -44,16 +46,22 @@ datasets:
       "color_transforms": [
       ]
     }
-  isic2020:
+  kvasir:
     size: 256
     class_num: 1
     dataset_path: "LoadData"
-    img_prefix: "ISIC_"
-    seg_prefix: "ISIC_"
     img_suffix: ".jpg"
-    seg_suffix: "_segmentation.png"
-    img: "isic2020/train/img"
-    mask: "isic2020/train/mask"
+    seg_suffix: ".jpg"
+    img: "Kvasir-SEG/images"
+    mask: "Kvasir-SEG/masks"
+    augmentations: {
+      "geometric_transforms": [
+        { "type": "Resize", "params": { "size": [ 256, 256 ] } }
+      ],
+      "color_transforms": [
+      ]
+    }
+
   DRIVE:
     size: 256
     class_num: 1

@@ -1,7 +1,10 @@
 import os
 
-import torch
+import torchvision.utils as vutils
 
+from PIL import Image
+import torch
+import numpy as np
 from LoadData.data import get_dataset
 from LoadData.utils import load_config
 from model_defination.model_loader import load_model
@@ -14,6 +17,8 @@ CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
 config = load_config(CONFIG_PATH)
 
 device = torch.device(config['device'] if torch.cuda.is_available() else "cpu")
+
+
 
 if __name__ == "__main__":
     train_config = config["train_setting"]
@@ -43,13 +48,23 @@ if __name__ == "__main__":
         for i, (image, segment_image) in enumerate(data_loader):
             image, segment_image = image.to(device), segment_image.to(device)
 
-            # 前向传播、计算损失、反向传播、优化
-            out_image = net(image)
+            # 确保 segment_image 是 LongTensor 且 shape 正确
+            segment_image = segment_image.squeeze(1).long()
+
+            # 前向传播
+            out_image = net(image)  # 不能加 softmax
+
+            # 打印调试信息
+            print(f"segment_image dtype: {segment_image.dtype}, unique values: {segment_image.unique()}")
+            print(f"out_image shape: {out_image.shape}, segment_image shape: {segment_image.shape}")
+
+            # 计算损失
             train_loss = loss_fn(out_image, segment_image)
 
+            # 反向传播和优化
             opt.zero_grad()
             train_loss.backward()
-            opt.step() # 调用学习率
+            opt.step()
 
             # 保存日志 (每个 batch 记录一次)
             with open(loss_log_path, "a") as f:
@@ -68,3 +83,5 @@ if __name__ == "__main__":
         # **在 epoch 级更新学习率**
         scheduler.step()
         epochs += 1
+
+

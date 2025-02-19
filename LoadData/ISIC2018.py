@@ -20,7 +20,7 @@ def load_image(file_path, size=None):
 
 
 class SynchronizedTransform:
-    """确保图像和 mask 同时进行相同的增强操作"""
+    """确保图像和 mask 同时进行相同增强操作"""
 
     def __init__(self, transforms_list):
         self.transforms = transforms_list
@@ -73,6 +73,12 @@ def build_transforms(augmentations):
             ))
 
     return SynchronizedTransform(transform_list)
+
+
+
+
+
+
 
 
 class ISIC2018_DataSet(Dataset):
