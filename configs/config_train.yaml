@@ -12,7 +12,7 @@ data_loader:
 
 # 训练配置
 train_setting:
-  dataset_name: "clinicDB"
+  dataset_name: "synapse"
   epochs: 100
   save_interval: 50
   lr: 0.001
@@ -38,7 +38,7 @@ datasets:
     augmentations: {
       "geometric_transforms": [
         { "type": "RandomHorizontalFlip", "params": { "p": 0.5 } },
-        { "type": "RandomRotation", "params": { "degree": 30 } },
+        { "type": "RandomRotation", "params": { "degree": 15 } },
         { "type": "Resize", "params": { "size": [256, 256] } }
       ],
       "color_transforms": [
@@ -53,13 +53,13 @@ datasets:
     augmentations: {
       "geometric_transforms": [
         { "type": "RandomHorizontalFlip", "params": { "p": 0.5 } },
-        { "type": "RandomRotation", "params": { "degree": 30 } },
+        { "type": "RandomRotation", "params": { "degree": 15 } },
         { "type": "Resize", "params": { "size": [ 256, 256 ] } }
       ],
       "color_transforms": [
       ]
     }
-  clinicDB:
+  clinicdb:
     size: 256
     class_num: 1
     dataset_path: "LoadData"
@@ -68,7 +68,7 @@ datasets:
     augmentations: {
       "geometric_transforms": [
         { "type": "RandomHorizontalFlip", "params": { "p": 0.5 } },
-        { "type": "RandomRotation", "params": { "degree": 30 } },
+        { "type": "RandomRotation", "params": { "degree": 15 } },
         { "type": "Resize", "params": { "size": [ 256, 256 ] } }
       ],
       "color_transforms": [
@@ -76,4 +76,16 @@ datasets:
     }
   synapse:
     size: 512
-    class_num: 1
+    class_num: 8
+    dataset_path: "LoadData"
+    img: "Synapse/all/images"
+    mask: "Synapse/all/masks_rgb"
+    augmentations: {
+      "geometric_transforms": [
+        { "type": "RandomHorizontalFlip", "params": { "p": 0.5 } },
+        { "type": "RandomRotation", "params": { "degree": 15 } },
+        { "type": "Resize", "params": { "size": [ 512, 512 ] } }
+      ],
+      "color_transforms": [
+      ]
+    }
