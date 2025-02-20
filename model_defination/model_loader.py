@@ -5,9 +5,9 @@ from glob import glob
 from LoadData.utils import load_config
 from model_defination.AAA_BNet.BNet import BNet
 from model_defination.ResNet.resnet import ResNet101, ResNet50, ResNet152
-from model_defination.UnetBase.unetbase import UNetBase
+from model_defination.AAA_Unet.unet import UNetBase
 from model_defination.fcn_8s.fnc_8s import FCN8s
-from model_defination.unetpp.unetpp import UnetPP
+from model_defination.AAA_unetpp.unetpp import UnetPP
 
 # load the config file
 CONFIG_NAME = "config_train.yaml"
@@ -48,13 +48,18 @@ def get_best_or_latest_model_path(model_path, model_name):
 
 # 模型映射表
 model_mapping = {
-    "unet0": lambda: UNetBase(1),
-    "unetPP": lambda: UnetPP(1),
+    # TODO：模型我想添加
+    # TODO：duck-net https://github.com/RazvanDu/DUCK-Net
+    # TODO: nn-unet https://github.com/MIC-DKFZ/nnUNet
+    "bnet": lambda: BNet(1),
+    "unet": lambda: UNetBase(1),
+    "unetpp": lambda: UnetPP(1),
+
     "res50": lambda: ResNet50(1),
     "res101": lambda: ResNet101(1),
     "res152": lambda: ResNet152(1),
     "fcn_8s": lambda: FCN8s(1),
-    "bnet": lambda: BNet(1)
+
 }
 
 

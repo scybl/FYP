@@ -1,15 +1,9 @@
-import torch
-
-from model_defination.UnetBase.unetbase import UNetBase
+from model_defination.AAA_Unet.unet import UNetBase
 from model_defination.AAA_BNet.BNet import BNet
 
-
 import torch
-import torch.nn as nn
-from fvcore.nn import FlopCountAnalysis, parameter_count_table
+from fvcore.nn import FlopCountAnalysis
 
-# 确保正确导入你的模型类
-# from your_model_file import BNet, UNetBase
 
 model_name = "UNet"
 

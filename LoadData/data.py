@@ -1,6 +1,7 @@
-from LoadData.ISIC2018 import ISIC2018_DataSet
-from LoadData.ISIC2020 import ISIC2020_DataSet
+from LoadData.ISIC2018_Dataset import ISIC2018_DataSet
 from torch.utils.data import DataLoader
+
+from LoadData.KvasirSEG_Dataset import KvasirSEG_Dataset
 
 
 class LabelProcessor:
@@ -45,31 +46,31 @@ def get_dataset(config, mode):
     # 如果数据集是 ISIC2018，加载特定数据集
     if dataset_name.lower() == "isic2018":
         dataset_class = ISIC2018_DataSet
-    elif dataset_name == "isic2020":
-        dataset_class = ISIC2020_DataSet
+    elif dataset_name.lower() == 'kvasir':
+        dataset_class = KvasirSEG_Dataset
+        # TODO: 这里要改，添加新的数据集
     else:
         raise ValueError(f"Dataset '{dataset_name}' is not supported.")
 
     dataset_config = config["datasets"][dataset_name]
-    print(config)
     batch_size = config["data_loader"]["batch_size"]
     shuffle = config["data_loader"]["shuffle"]
     num_workers = config["data_loader"]["num_workers"]
 
     augmentations = dataset_config["augmentations"]
-    print(augmentations)
-    print(f"Loading {mode} dataset: {dataset_name}")
+    print(f"Loading {mode} dataset: {dataset_name}, data augmentations has been loaded")
 
     # 获取数据集的 class_num
     class_num = dataset_config["class_num"]
 
-    # 初始化 ISIC2018 数据集
+    # 初始化数据集
     dataset = dataset_class(
         dataset_config,
         augmentations,
         class_num=class_num
     )
 
+    # TODO:添加一个划分验证集，测试集，训练集的方法，这会先不写了，根据config的配置来划分
     print(f"{dataset.__len__()}")
 
     # 返回数据加载器
