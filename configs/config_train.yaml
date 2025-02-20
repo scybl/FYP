@@ -12,7 +12,7 @@ data_loader:
 
 # 训练配置
 train_setting:
-  dataset_name: "kvasir"
+  dataset_name: "clinicDB"
   epochs: 100
   save_interval: 50
   lr: 0.001
@@ -77,4 +77,3 @@ datasets:
   synapse:
     size: 512
     class_num: 1
-    

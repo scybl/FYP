@@ -1,3 +1,5 @@
+from LoadData import Synapse_Dataset
+from LoadData.ClinicDB_Dataset import ClinicDB_Dataset
 from LoadData.ISIC2018_Dataset import ISIC2018_DataSet
 from torch.utils.data import DataLoader
 
@@ -48,6 +50,10 @@ def get_dataset(config, mode):
         dataset_class = ISIC2018_DataSet
     elif dataset_name.lower() == 'kvasir':
         dataset_class = KvasirSEG_Dataset
+    elif dataset_name.lower() == 'clinicdb':
+        dataset_class = ClinicDB_Dataset
+    elif dataset_name.lower() == 'synapse':
+        dataset_class = Synapse_Dataset
         # TODO: 这里要改，添加新的数据集
     else:
         raise ValueError(f"Dataset '{dataset_name}' is not supported.")

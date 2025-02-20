@@ -1,22 +1,10 @@
-
 import random
 import torch
-from PIL import Image
 import torchvision.transforms as transforms
 
 
-# 定义图像和标签的变换
-transform_image = transforms.Compose([
-    transforms.ToTensor()
-])  # 图像转换为张量
 
 
-# 统一加载图像方法
-def load_image(file_path, size=None):
-    image = Image.open(file_path).convert('RGB')
-    if size:
-        image = image.resize(size, Image.BILINEAR)
-    return image
 
 class SynchronizedTransform:
     """确保图像和 mask 同时进行相同的增强操作"""

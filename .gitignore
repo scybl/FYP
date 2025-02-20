@@ -1,6 +1,10 @@
 .idea
 **/__pycache__
 
+output.txt
+.DS_Store
+
+
 saved_images/
 params/
 paper/
@@ -11,6 +15,4 @@ CVC-ClinicDB/
 Synapse/
 sessile-main-Kvasir-SEG/
 
-output.txt
-.DS_Store
 
