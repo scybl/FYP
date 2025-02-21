@@ -5,7 +5,7 @@ model:
 save_image_path: "saved_images"  # save the predicted pic
 
 # 测试配置
-test_setting:
+setting:
   seed: 1234
   dataset_name: "isic2018"
 

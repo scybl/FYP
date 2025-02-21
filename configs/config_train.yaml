@@ -1,17 +1,17 @@
 device: "cuda"  # cpu/ cuda
 model:
-  name: "unetpp"
+  name: "unet"
   save_path: "params/"  # weight saving path
 save_image_path: "saved_images"  # save the predicted pic
 
 # 数据加载器配置
 data_loader:
-  batch_size: 8
+  batch_size: 1
   shuffle: true
   num_workers: 16
 
 # 训练配置
-train_setting:
+setting:
   dataset_name: "synapse"
   epochs: 100
   save_interval: 50
@@ -82,8 +82,6 @@ datasets:
     mask: "Synapse/all/masks_rgb"
     augmentations: {
       "geometric_transforms": [
-        { "type": "RandomHorizontalFlip", "params": { "p": 0.5 } },
-        { "type": "RandomRotation", "params": { "degree": 15 } },
         { "type": "Resize", "params": { "size": [ 512, 512 ] } }
       ],
       "color_transforms": [

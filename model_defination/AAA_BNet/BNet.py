@@ -115,6 +115,6 @@ class BNet(nn.Module):
         Dag3 = self.dag1(R1, U3)
         plus3_out = Dag3 + U3
 
-        out = self.convFinal1(self.pham4(plus3_out))
+        pham4_out = self.pham4(plus3_out)
 
-        return out
+        return self.convFinal1(pham4_out)

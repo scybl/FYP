@@ -2,10 +2,10 @@ import torch
 import torch.nn as nn
 
 
-class ContinusParalleConv(nn.Module):
+class ConvBlock(nn.Module):
     # 一个连续的卷积模块，包含BatchNorm 在前 和 在后 两种模式
     def __init__(self, in_channels, out_channels, pre_Batch_Norm=True):
-        super(ContinusParalleConv, self).__init__()
+        super(ConvBlock, self).__init__()
         self.in_channels = in_channels
         self.out_channels = out_channels
 
@@ -40,25 +40,25 @@ class UnetPP(nn.Module):
         self.deep_supervision = deep_supervision
         self.filters = [64, 128, 256, 512, 1024]
 
-        self.stage_0 = ContinusParalleConv(3, 64, pre_Batch_Norm=False)
-        self.stage_1 = ContinusParalleConv(64, 128, pre_Batch_Norm=False)
-        self.stage_2 = ContinusParalleConv(128, 256, pre_Batch_Norm=False)
-        self.stage_3 = ContinusParalleConv(256, 512, pre_Batch_Norm=False)
-        self.stage_4 = ContinusParalleConv(512, 1024, pre_Batch_Norm=False)
+        self.stage_0 = ConvBlock(3, 64, pre_Batch_Norm=False)
+        self.stage_1 = ConvBlock(64, 128, pre_Batch_Norm=False)
+        self.stage_2 = ConvBlock(128, 256, pre_Batch_Norm=False)
+        self.stage_3 = ConvBlock(256, 512, pre_Batch_Norm=False)
+        self.stage_4 = ConvBlock(512, 1024, pre_Batch_Norm=False)
 
-        self.CONV0_1 = ContinusParalleConv(64 * 2, 64, pre_Batch_Norm=True)
-        self.CONV0_2 = ContinusParalleConv(64 * 3, 64, pre_Batch_Norm=True)
-        self.CONV0_3 = ContinusParalleConv(64 * 4, 64, pre_Batch_Norm=True)
-        self.CONV0_4 = ContinusParalleConv(64 * 5, 64, pre_Batch_Norm=True)
+        self.CONV0_1 = ConvBlock(64 * 2, 64, pre_Batch_Norm=True)
+        self.CONV0_2 = ConvBlock(64 * 3, 64, pre_Batch_Norm=True)
+        self.CONV0_3 = ConvBlock(64 * 4, 64, pre_Batch_Norm=True)
+        self.CONV0_4 = ConvBlock(64 * 5, 64, pre_Batch_Norm=True)
 
-        self.CONV1_1 = ContinusParalleConv(128 * 2, 128, pre_Batch_Norm=True)
-        self.CONV1_2 = ContinusParalleConv(128 * 3, 128, pre_Batch_Norm=True)
-        self.CONV1_3 = ContinusParalleConv(128 * 4, 128, pre_Batch_Norm=True)
+        self.CONV1_1 = ConvBlock(128 * 2, 128, pre_Batch_Norm=True)
+        self.CONV1_2 = ConvBlock(128 * 3, 128, pre_Batch_Norm=True)
+        self.CONV1_3 = ConvBlock(128 * 4, 128, pre_Batch_Norm=True)
 
-        self.CONV2_1 = ContinusParalleConv(256 * 2, 256, pre_Batch_Norm=True)
-        self.CONV2_2 = ContinusParalleConv(256 * 3, 256, pre_Batch_Norm=True)
+        self.CONV2_1 = ConvBlock(256 * 2, 256, pre_Batch_Norm=True)
+        self.CONV2_2 = ConvBlock(256 * 3, 256, pre_Batch_Norm=True)
 
-        self.CONV3_1 = ContinusParalleConv(512 * 2, 512, pre_Batch_Norm=True)
+        self.CONV3_1 = ConvBlock(512 * 2, 512, pre_Batch_Norm=True)
 
         self.pool = nn.MaxPool2d(2)  # max pool
 

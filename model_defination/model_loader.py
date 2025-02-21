@@ -7,7 +7,7 @@ from model_defination.AAA_BNet.BNet import BNet
 from model_defination.ResNet.resnet import ResNet101, ResNet50, ResNet152
 from model_defination.AAA_Unet.unet import UNetBase
 from model_defination.fcn_8s.fnc_8s import FCN8s
-from model_defination.AAA_unetpp.unetpp import UnetPP
+from model_defination.unetpp.unetpp import UnetPP
 
 # load the config file
 CONFIG_NAME = "config_train.yaml"
@@ -46,19 +46,21 @@ def get_best_or_latest_model_path(model_path, model_name):
     return numbered_files[0][0]
 
 
+class_num = config["datasets"][config['setting']["dataset_name"]]["class_num"]
+
 # 模型映射表
 model_mapping = {
     # TODO：模型我想添加
     # TODO：duck-net https://github.com/RazvanDu/DUCK-Net
     # TODO: nn-unet https://github.com/MIC-DKFZ/nnUNet
-    "bnet": lambda: BNet(1),
-    "unet": lambda: UNetBase(1),
-    "unetpp": lambda: UnetPP(1),
+    "bnet": lambda: BNet(class_num),
+    "unet": lambda: UNetBase(class_num),
+    "unetpp": lambda: UnetPP(class_num),
 
-    "res50": lambda: ResNet50(1),
-    "res101": lambda: ResNet101(1),
-    "res152": lambda: ResNet152(1),
-    "fcn_8s": lambda: FCN8s(1),
+    "res50": lambda: ResNet50(class_num),
+    "res101": lambda: ResNet101(class_num),
+    "res152": lambda: ResNet152(class_num),
+    "fcn_8s": lambda: FCN8s(class_num),
 
 }
 
@@ -78,6 +80,7 @@ def load_model(_config, mode):
     # 初始化模型
     if model_name not in model_mapping:
         raise ValueError(f"Unknown model name '{model_name}' in config file.")
+
     model = model_mapping[model_name]()
 
     # 如果是训练模式，尝试加载权重

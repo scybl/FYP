@@ -7,10 +7,9 @@ from LoadData.assistance import build_transforms
 
 class KvasirSEG_Dataset(data.Dataset):
 
-    def __init__(self,  config, augmentations, transform_label=None, class_num=1):
+    def __init__(self,  config, augmentations, class_num=1):
         self.config = config
         self.mask_name = os.listdir(os.path.join(self.config["dataset_path"], self.config["mask"]))
-        self.transform_label = transform_label
         self.class_num = class_num
 
         # **使用 SynchronizedTransform 进行同步数据增强**
@@ -37,10 +36,6 @@ class KvasirSEG_Dataset(data.Dataset):
 
         # **同步几何变换**
         img_image, segment_image = self.transforms(img_image, segment_image)
-
-        # **对 mask 进行 transform_label 额外处理**
-        if self.transform_label:
-            segment_image = self.transform_label(segment_image)
 
         # **转换为 Tensor**
         img_image = self.to_tensor(img_image)  # 变为 (3, H, W)

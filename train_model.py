@@ -21,17 +21,21 @@ CONFIG_NAME = "config_train.yaml"
 CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
 config = load_config(CONFIG_PATH)
 
+class_num = config["datasets"][config["setting"]["dataset_name"]]["class_num"]
+
 device = torch.device(config['device'] if torch.cuda.is_available() else "cpu")
 
 if __name__ == "__main__":
-    train_config = config["train_setting"]
-    net = load_model(config, 'train')
-    opt = optim.Adam(net.parameters(), lr=train_config['lr'])
-    loss_fn = nn.BCEWithLogitsLoss()
-
     # 加载数据
     data_loader = get_dataset(config, 'train')
     save_model_path = os.path.join(config['model']["save_path"], config["model"]['name'])
+
+    # 加载模型
+    train_config = config["setting"]
+    net = load_model(config, 'train')
+    opt = optim.Adam(net.parameters(), lr=train_config['lr'])
+    loss_fn = nn.BCEWithLogitsLoss()
+    # loss_fn = nn.CrossEntropyLoss() # TODO：这个有问题，后面我再看一下问题在哪
 
     # 余弦退火调度器 (更新学习率的周期 T_max 设为总 epoch 数)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(
@@ -48,12 +52,17 @@ if __name__ == "__main__":
     epochs = 1
     t = 1
     while epochs <= train_config['epochs']:
+
         for i, (image, segment_image) in enumerate(data_loader):
             image, segment_image = image.to(device), segment_image.to(device)
 
             # 前向传播、计算损失、反向传播、优化
             out_image = net(image)
-            train_loss = loss_fn(out_image, segment_image)
+            # print(image.size())
+            # print(out_image.size())
+            # print(segment_image.size())
+
+            train_loss = loss_fn(out_image, segment_image) #所有的数据类型都是tensor float tensor
 
             opt.zero_grad()
             train_loss.backward()
@@ -72,7 +81,6 @@ if __name__ == "__main__":
                 torch.save(net.state_dict(), f"{save_model_path}_{t // train_config['save_interval']}.pth")
 
             t += 1
-
 
         # **在 epoch 级更新学习率**
         scheduler.step()
