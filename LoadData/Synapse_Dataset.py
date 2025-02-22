@@ -63,9 +63,6 @@ class Synapse_Dataset(Dataset):
         # **转换为 Tensor**
         img_image = self.to_tensor(img_image)  # 变为 (3, H, W)
 
-        # TODO: 在这里根据color map将segment_image从<PIL.Image.Image image mode=RGB size=512x512>
-        #  TODO: 映射为tensor (8, H, W)，
-
         # 转换segment_image为one-hot tensor
         segment_array = np.array(segment_image)  # (H, W, 3)
 
@@ -84,7 +81,5 @@ class Synapse_Dataset(Dataset):
             mask_tensor,
             num_classes=self.class_num
         ).permute(2, 0, 1).float()  # (C, H, W)
-
-        print(one_hot)
 
         return img_image, one_hot  # 形状: (3, H, W), (8, H, W)

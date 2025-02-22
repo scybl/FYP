@@ -34,8 +34,8 @@ if __name__ == "__main__":
     train_config = config["setting"]
     net = load_model(config, 'train')
     opt = optim.Adam(net.parameters(), lr=train_config['lr'])
-    loss_fn = nn.BCEWithLogitsLoss()
-    # loss_fn = nn.CrossEntropyLoss() # TODO：这个有问题，后面我再看一下问题在哪
+    # loss_fn = nn.BCEWithLogitsLoss()
+    loss_fn = nn.CrossEntropyLoss() # TODO：这个有问题，后面我再看一下问题在哪
 
     # 余弦退火调度器 (更新学习率的周期 T_max 设为总 epoch 数)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(
@@ -58,6 +58,8 @@ if __name__ == "__main__":
 
             # 前向传播、计算损失、反向传播、优化
             out_image = net(image)
+
+            # 看一下数据的size是否相同，如果相同则可以继续进行
             # print(image.size())
             # print(out_image.size())
             # print(segment_image.size())
