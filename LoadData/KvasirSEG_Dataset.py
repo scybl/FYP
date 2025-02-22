@@ -7,7 +7,7 @@ from LoadData.assistance import build_transforms
 
 class KvasirSEG_Dataset(data.Dataset):
 
-    def __init__(self,  config, augmentations, class_num=1):
+    def __init__(self, config, augmentations, class_num=1):
         self.config = config
         self.mask_name = os.listdir(os.path.join(self.config["dataset_path"], self.config["mask"]))
         self.class_num = class_num
@@ -41,4 +41,3 @@ class KvasirSEG_Dataset(data.Dataset):
         img_image = self.to_tensor(img_image)  # 变为 (3, H, W)
         segment_image = self.to_tensor(segment_image)  # **变为 (1, H, W)，避免通道不匹配**
         return img_image, segment_image
-

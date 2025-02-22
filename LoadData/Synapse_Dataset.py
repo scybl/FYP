@@ -1,9 +1,7 @@
 import numpy as np
 import os
 
-import tifffile as tiff
 from PIL import Image
-from matplotlib import pyplot as plt
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
 from LoadData.assistance import build_transforms
@@ -14,14 +12,14 @@ import torch
 """
 # 颜色映射表
 color_mapping = {
-    (0, 0, 0): 0, # 黑色
-    (255, 255, 255): 1, # 白色
-    (0, 0, 255): 2, # 红色
-    (0, 255, 0): 3, # 绿色
-    (255, 0, 0): 4, # 蓝色
-    (0, 255, 255): 5, # 黄色
-    (255, 0, 255): 6, # 紫色
-    (255, 255, 0): 7 # 青色
+    (0, 0, 0): 0,  # 黑色
+    (255, 255, 255): 1,  # 白色
+    (0, 0, 255): 2,  # 红色
+    (0, 255, 0): 3,  # 绿色
+    (255, 0, 0): 4,  # 蓝色
+    (0, 255, 255): 5,  # 黄色
+    (255, 0, 255): 6,  # 紫色
+    (255, 255, 0): 7  # 青色
 }
 
 
@@ -47,7 +45,6 @@ class Synapse_Dataset(Dataset):
         return len(self.mask_names)
 
     def __getitem__(self, index):
-
         # 获取图像和分割标签路径
         segment_name = self.mask_names[index]
         segment_path = os.path.join(self.mask_dir, segment_name)
@@ -57,7 +54,7 @@ class Synapse_Dataset(Dataset):
         img_image = Image.open(image_path).convert("RGB")  # 确保 image 为 3 通道
         segment_image = Image.open(segment_path).convert("RGB")  # 以 RGB 加载分割图像\
 
-        img_image, segment_image = self.transforms(img_image, segment_image) # 数据增强
+        img_image, segment_image = self.transforms(img_image, segment_image)  # 数据增强
         # 加载的图片是没有问题的
 
         # **转换为 Tensor**

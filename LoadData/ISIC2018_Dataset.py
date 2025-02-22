@@ -8,6 +8,8 @@ from LoadData.assistance import build_transforms
 """
 读取isic2018，返回img/mask的tensor类
 """
+
+
 class ISIC2018_DataSet(Dataset):
     def __init__(self, config, augmentations, transform_label=None, class_num=1):
         self.config = config

@@ -43,7 +43,7 @@ def get_dataset(config, mode):
         raise ValueError(f"Unsupported mode '{mode}'. Use 'train' or 'test'.")
 
     # 选择不同模式下的 dataset_name
-    dataset_name = config["setting"]["dataset_name"] if mode=="train" else config["test_setting"]["dataset_name"]
+    dataset_name = config["setting"]["dataset_name"] if mode == "train" else config["test_setting"]["dataset_name"]
 
     # 如果数据集是 ISIC2018，加载特定数据集
     if dataset_name.lower() == "isic2018":
@@ -68,7 +68,6 @@ def get_dataset(config, mode):
     # TODO: 我的数据似乎没有进行归一化，后面检查一下
     # 获取数据集的 class_num
     class_num = dataset_config["class_num"]
-
 
     # 初始化数据集
     dataset = dataset_class(

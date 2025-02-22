@@ -1,6 +1,6 @@
-
 import torch
 import torch.nn as nn
+
 
 ##### Binary segmentation #####
 class IoULoss_Binary(nn.Module):
@@ -21,12 +21,14 @@ class IoULoss_Binary(nn.Module):
         if sigmoid:
             inputs = torch.sigmoid(inputs)
 
-        assert inputs.size() == target.size(), 'predict {} & target {} shape do not match'.format(inputs.size(), target.size())
+        assert inputs.size() == target.size(), 'predict {} & target {} shape do not match'.format(inputs.size(),
+                                                                                                  target.size())
 
         iou = self._iou_loss(inputs[:, 0], target[:, 0])
         loss = iou * weight
 
         return loss
+
 
 ##### Multi-class segmentation #####
 class IoULoss(nn.Module):
@@ -58,7 +60,8 @@ class IoULoss(nn.Module):
         target = self._one_hot_encoder(target)
         if weight is None:
             weight = [1] * self.n_classes
-        assert inputs.size() == target.size(), 'predict {} & target {} shape do not match'.format(inputs.size(), target.size())
+        assert inputs.size() == target.size(), 'predict {} & target {} shape do not match'.format(inputs.size(),
+                                                                                                  target.size())
         class_wise_iou = []
         loss = 0.0
         for i in range(0, self.n_classes):

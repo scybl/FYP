@@ -76,7 +76,6 @@ class SegmentationEvaluator:
             self.net = self.load_model(model_path)
             self.net.eval()
 
-
             total_loss = 0
             total_dice = 0
             total_iou = 0

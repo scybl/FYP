@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 ##### Binary segmentation #####
 class DiceLoss_Binary(nn.Module):
     def __init__(self):
@@ -20,12 +21,14 @@ class DiceLoss_Binary(nn.Module):
         if sigmoid:
             inputs = torch.sigmoid(inputs)
 
-        assert inputs.size() == target.size(), 'predict {} & target {} shape do not match'.format(inputs.size(), target.size())
+        assert inputs.size() == target.size(), 'predict {} & target {} shape do not match'.format(inputs.size(),
+                                                                                                  target.size())
 
         dice = self._dice_loss(inputs[:, 0], target[:, 0])
         loss = dice * weight
 
         return loss
+
 
 ##### Multi-class segmentation #####
 class DiceLoss(nn.Module):
@@ -57,7 +60,8 @@ class DiceLoss(nn.Module):
         target = self._one_hot_encoder(target)
         if weight is None:
             weight = [1] * self.n_classes
-        assert inputs.size() == target.size(), 'predict {} & target {} shape do not match'.format(inputs.size(), target.size())
+        assert inputs.size() == target.size(), 'predict {} & target {} shape do not match'.format(inputs.size(),
+                                                                                                  target.size())
         class_wise_dice = []
         loss = 0.0
         for i in range(0, self.n_classes):

@@ -12,10 +12,11 @@ class ClinicDB_Dataset(Dataset):
     """
     ClinicDB Dataset. 读取文件，返回文件的tensor格式
     """
+
     def __init__(self, config, augmentations, transform_label=None, class_num=1):
         self.config = config
         self.image_dir = os.path.join(self.config["dataset_path"], self.config["img"])
-        self.image_names =[f for f in os.listdir(self.image_dir) if f.endswith('.tif')]
+        self.image_names = [f for f in os.listdir(self.image_dir) if f.endswith('.tif')]
 
         self.mask_dir = os.path.join(self.config["dataset_path"], self.config["mask"])
         self.mask_names = [f for f in os.listdir(self.mask_dir) if f.endswith('.tif')]  # 显式过滤TIF文件
