@@ -6,7 +6,7 @@ save_image_path: "saved_images"  # save the predicted pic
 
 # 数据加载器配置
 data_loader:
-  batch_size: 1
+  batch_size: 6
   shuffle: true
   num_workers: 16
 

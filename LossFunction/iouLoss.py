@@ -1,72 +1,54 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
-##### Binary segmentation #####
-class IoULoss_Binary(nn.Module):
-    def __init__(self):
-        super(IoULoss_Binary, self).__init__()
-
-    def _iou_loss(self, score, target):
-        target = target.float()
-        smooth = 1.0
-        intersect = torch.sum(score * target)
-        y_sum = torch.sum(target * target)
-        z_sum = torch.sum(score * score)
-        loss = (intersect + smooth) / (z_sum + y_sum - intersect + smooth)
-        loss = 1 - loss
-        return loss
-
-    def forward(self, inputs, target, weight=None, sigmoid=True):
-        if sigmoid:
-            inputs = torch.sigmoid(inputs)
-
-        assert inputs.size() == target.size(), 'predict {} & target {} shape do not match'.format(inputs.size(),
-                                                                                                  target.size())
-
-        iou = self._iou_loss(inputs[:, 0], target[:, 0])
-        loss = iou * weight
-
-        return loss
-
-
-##### Multi-class segmentation #####
 class IoULoss(nn.Module):
-    def __init__(self, n_classes):
-        super(IoULoss, self).__init__()
+    def __init__(self, n_classes=1, weight=None, smooth=1e-6, reduction='weighted_mean'):
+        super().__init__()
         self.n_classes = n_classes
+        self.smooth = smooth
+        self.reduction = reduction
 
-    def _one_hot_encoder(self, input_tensor):
-        tensor_list = []
-        for i in range(self.n_classes):
-            temp_prob = input_tensor == i
-            tensor_list.append(temp_prob.unsqueeze(1))
-        output_tensor = torch.cat(tensor_list, dim=1)
-        return output_tensor.float()
+        if weight is not None:
+            self.register_buffer('weight', torch.tensor(weight, dtype=torch.float32))
+        else:
+            self.weight = None
 
-    def _iou_loss(self, score, target):
-        target = target.float()
-        smooth = 1.0
-        intersect = torch.sum(score * target)
-        y_sum = torch.sum(target * target)
-        z_sum = torch.sum(score * score)
-        loss = (intersect + smooth) / (z_sum + y_sum - intersect + smooth)
-        loss = 1 - loss
-        return loss
+    def forward(self, inputs, target):
+        # 自动处理二分类情况
+        if inputs.shape[1] == 1 and self.n_classes == 1:
+            inputs = torch.sigmoid(inputs)# 激活，所以不用外部激活
+            inputs = torch.cat([1 - inputs, inputs], dim=1)  # 扩展为双通道
+            self.n_classes = 2
 
-    def forward(self, inputs, target, weight=None, softmax=True):
-        if softmax:
-            inputs = torch.softmax(inputs, dim=1)
-        target = self._one_hot_encoder(target)
-        if weight is None:
-            weight = [1] * self.n_classes
-        assert inputs.size() == target.size(), 'predict {} & target {} shape do not match'.format(inputs.size(),
-                                                                                                  target.size())
-        class_wise_iou = []
-        loss = 0.0
-        for i in range(0, self.n_classes):
-            iou = self._iou_loss(inputs[:, i], target[:, i])
-            class_wise_iou.append(1.0 - iou.item())
-            loss += iou * weight[i]
+        # 多分类处理
+        if inputs.shape[1] != self.n_classes:
+            inputs = torch.softmax(inputs, dim=1)# 激活，所以不用外部激活
 
-        return loss / self.n_classes
+        # 转换 target 为 one-hot
+        target_onehot = F.one_hot(target.long(), self.n_classes).permute(0, 3, 1, 2).float()
+
+        assert inputs.shape == target_onehot.shape, f"Shape mismatch: {inputs.shape} vs {target_onehot.shape}"
+
+        # 计算 IoU
+        dims = (2, 3)  # 假设输入为 2D 图像 (H,W)
+        intersection = torch.sum(inputs * target_onehot, dim=dims)
+        union = torch.sum(inputs, dim=dims) + torch.sum(target_onehot, dim=dims) - intersection
+
+        iou = (intersection + self.smooth) / (union + self.smooth)
+        loss = 1 - iou
+
+        # 加权策略
+        if self.weight is not None:
+            loss = loss * self.weight.view(1, -1)
+
+        if self.reduction == 'mean':
+            return loss.mean()
+        elif self.reduction == 'sum':
+            return loss.sum()
+        else:  # weighted_mean
+            if self.weight is None:
+                return loss.mean()
+            else:
+                return loss.sum() / self.weight.sum()

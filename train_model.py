@@ -1,13 +1,12 @@
 import os
-
 import torch
-
 from LoadData.data import get_dataset
 from LoadData.utils import load_config
+
 from model_defination.model_loader import load_model
 from torch import optim
-import torch.nn as nn
 
+from LossFunction.DiceCE import DiceCE
 
 def print_tensor_size(name, tensor):
     if tensor is None:
@@ -35,8 +34,7 @@ if __name__ == "__main__":
     net = load_model(config, 'train')
     opt = optim.Adam(net.parameters(), lr=train_config['lr'])
     # loss_fn = nn.BCEWithLogitsLoss()
-    loss_fn = nn.CrossEntropyLoss()  # TODO：这个有问题，我在想是不是应该自己写损失函数，目前写了LossFunction path
-
+    loss_fn = DiceCE(class_num)
     # 余弦退火调度器 (更新学习率的周期 T_max 设为总 epoch 数)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(
         optimizer=opt,
@@ -60,9 +58,9 @@ if __name__ == "__main__":
             out_image = net(image)
 
             # 看一下数据的size是否相同，如果相同则可以继续进行
-            # print(image.size())
-            # print(out_image.size())
-            # print(segment_image.size())
+            print(image.size())
+            print(out_image.size())
+            print(segment_image.size())
 
             train_loss = loss_fn(out_image, segment_image)  # 所有的数据类型都是tensor float tensor
 

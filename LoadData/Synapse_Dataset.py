@@ -55,7 +55,6 @@ class Synapse_Dataset(Dataset):
         segment_image = Image.open(segment_path).convert("RGB")  # 以 RGB 加载分割图像\
 
         img_image, segment_image = self.transforms(img_image, segment_image)  # 数据增强
-        # 加载的图片是没有问题的
 
         # **转换为 Tensor**
         img_image = self.to_tensor(img_image)  # 变为 (3, H, W)
