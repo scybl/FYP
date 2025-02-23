@@ -35,7 +35,7 @@ if __name__ == "__main__":
     net = load_model(config, 'train')
     opt = optim.Adam(net.parameters(), lr=train_config['lr'])
     # loss_fn = nn.BCEWithLogitsLoss()
-    loss_fn = nn.CrossEntropyLoss()  # TODO：这个有问题，后面我再看一下问题在哪
+    loss_fn = nn.CrossEntropyLoss()  # TODO：这个有问题，我在想是不是应该自己写损失函数，目前写了LossFunction path
 
     # 余弦退火调度器 (更新学习率的周期 T_max 设为总 epoch 数)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(
