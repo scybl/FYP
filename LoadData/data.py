@@ -80,5 +80,7 @@ def get_dataset(config, mode):
     # TODO：
     print(f"{dataset.__len__()}")
 
+    data_all = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+
     # 返回数据加载器
-    return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
+    return data_all

@@ -56,5 +56,5 @@ def visualize_training_results(csv_file):
 
 
 # 使用示例（请替换成你的 CSV 文件路径）
-csv_file_path = 'answ/version1/evaluate.csv'
+csv_file_path = 'answ/unet_isic2018/evaluation_results.csv'
 visualize_training_results(csv_file_path)

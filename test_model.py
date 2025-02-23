@@ -31,7 +31,7 @@ class SegmentationEvaluator:
         self.model_path = self.config['model'][('save_path')]
         self.model_name = self.config['model']['name']
         self.data_loader = get_dataset(self.config, 'test')
-        self.loss_fn = nn.BCEWithLogitsLoss()
+        self.loss_fn = nn.CrossEntropyLoss() # 从BSC环城cross entropy 损失
 
     def load_model(self, model_path):
         """加载模型权重"""
@@ -119,13 +119,14 @@ class SegmentationEvaluator:
 
             results.append({
                 "model_file": model_file,
-                "avg_loss": avg_loss,
+                "avg_loss": avg_loss, # BSC损失
                 "avg_dice": avg_dice,
                 "avg_iou": avg_iou,
                 "avg_pixel_acc": avg_pixel_acc
             })
 
             if avg_dice > best_dice:
+                # 是使用dice作为evaluate 
                 best_dice = avg_dice
                 best_model = model_file
 

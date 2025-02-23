@@ -24,6 +24,8 @@ class_num = config["datasets"][config["setting"]["dataset_name"]]["class_num"]
 
 device = torch.device(config['device'] if torch.cuda.is_available() else "cpu")
 
+
+
 if __name__ == "__main__":
     # 加载数据
     data_loader = get_dataset(config, 'train')
@@ -54,7 +56,7 @@ if __name__ == "__main__":
         for i, (image, segment_image) in enumerate(data_loader):
             image, segment_image = image.to(device), segment_image.to(device)
 
-            # 前向传播、计算损失、反向传播、优化
+            # 前向传播
             out_image = net(image)
 
             # 看一下数据的size是否相同，如果相同则可以继续进行
@@ -85,3 +87,5 @@ if __name__ == "__main__":
         # **在 epoch 级更新学习率**
         scheduler.step()
         epochs += 1
+
+

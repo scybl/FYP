@@ -2,6 +2,8 @@ device: "cuda"  # cpu/ cuda
 model:
   name: "unet"
   save_path: "params/"  # weight saving path
+
+save_pic: True
 save_image_path: "saved_images"  # save the predicted pic
 
 # 数据加载器配置
