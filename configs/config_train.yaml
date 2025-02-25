@@ -3,12 +3,13 @@ model:
   name: "unet"
   save_path: "params/"  # weight saving path
 
-save_pic: True
+# 保存训练结果
+save_pic: False
 save_image_path: "saved_images"  # save the predicted pic
 
 # 数据加载器配置
 data_loader:
-  batch_size: 6
+  batch_size: 16
   shuffle: true
   num_workers: 16
 
@@ -16,7 +17,6 @@ data_loader:
 setting:
   dataset_name: "synapse"
   epochs: 100
-  save_interval: 50
   lr: 0.001
   eta_min: 0.00001
   t_max: 25
@@ -77,14 +77,14 @@ datasets:
       ]
     }
   synapse:
-    size: 512
-    class_num: 8
+    size: 224
+    class_num: 9
     dataset_path: "LoadData"
     img: "Synapse/all/images"
     mask: "Synapse/all/masks_rgb"
     augmentations: {
       "geometric_transforms": [
-        { "type": "Resize", "params": { "size": [ 512, 512 ] } }
+        { "type": "Resize", "params": { "size": [ 224, 224 ] } }
       ],
       "color_transforms": [
       ]

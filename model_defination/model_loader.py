@@ -4,10 +4,9 @@ import torch
 from glob import glob
 from LoadData.utils import load_config
 from model_defination.AAA_BNet.BNet import BNet
-from model_defination.ResNet.resnet import ResNet101, ResNet50, ResNet152
+from model_defination.AAA_DuckNet.DuckNet import  DuckNet
 from model_defination.AAA_Unet.unet import UNetBase
-from model_defination.fcn_8s.fnc_8s import FCN8s
-from model_defination.unetpp.unetpp import UnetPP
+from model_defination.AAA_unetpp.unetpp import UnetPP
 
 # load the config file
 CONFIG_NAME = "config_train.yaml"
@@ -55,12 +54,13 @@ model_mapping = {
     # TODO: nn-unet https://github.com/MIC-DKFZ/nnUNet
     "bnet": lambda: BNet(class_num),
     "unet": lambda: UNetBase(class_num),
-    "unetpp": lambda: UnetPP(class_num),
+    "AAA_unetpp": lambda: UnetPP(class_num),
+    "duck": lambda: DuckNet(class_num),
 
-    "res50": lambda: ResNet50(class_num),
-    "res101": lambda: ResNet101(class_num),
-    "res152": lambda: ResNet152(class_num),
-    "fcn_8s": lambda: FCN8s(class_num),
+    # "res50": lambda: ResNet50(class_num),
+    # "res101": lambda: ResNet101(class_num),
+    # "res152": lambda: ResNet152(class_num),
+    # "fcn_8s": lambda: FCN8s(class_num),
 
 }
 

@@ -5,7 +5,7 @@ from torch.nn import functional as F
 """
 这个是所有的B-Net架构的内容，我将所有封装的模块都写在这里，方便后续更改
 """
-
+# TODO：看看能不能做一个深度监督出来
 
 class DAG(nn.Module):
     def __init__(self, channels, dilation_rate=2, dropout_rate=0.3):
@@ -60,10 +60,10 @@ class DAG(nn.Module):
 
 
 class ECAB(nn.Module):
-    def __init__(self, channels, reduction_ratio=4, dropout_rate=0.3):
+    def __init__(self, channels, deep_supervisor=True, reduction_ratio=4, dropout_rate=0.3):
         super(ECAB, self).__init__()
         reduced_channels = channels // reduction_ratio
-
+        self.supervisor = deep_supervisor
         # AMP 路径（全局平均池化）
         self.AMP = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),  # 全局平均池化 (C, H, W) -> (C, 1, 1)
@@ -76,10 +76,10 @@ class ECAB(nn.Module):
         # APP 路径（全局最大池化）
         self.APP = nn.Sequential(
             nn.AdaptiveMaxPool2d(1),  # 全局最大池化 (C, H, W) -> (C, 1, 1)
-            nn.Conv2d(channels, reduced_channels, 1),  # 1x1 卷积: (C, 1, 1) -> (C/r, 1, 1)
+            nn.Conv2d(channels, reduced_channels, 1),  # TODO： 看看这里是否使用线性层来计算，适用线性层才需要dropout 1x1 卷积: (C, 1, 1) -> (C/r, 1, 1)  (B, C) -> LINEAR(C -> CT) -> (B, CT) # LINEAR
             nn.ReLU(inplace=True),  # ReLU 激活函数
             nn.Dropout(p=dropout_rate),  # Dropout 层
-            nn.Conv2d(reduced_channels, channels, 1)  # 1x1 卷积: (C/r, 1, 1) -> (C, 1, 1)
+            nn.Conv2d(reduced_channels, channels, 1)  # TODO： 这里也是 1x1 卷积: (C/r, 1, 1) -> (C, 1, 1) # Linear
         )
 
         # 空间 H * W 卷积路径
@@ -187,7 +187,7 @@ class PHAM(nn.Module):
     @staticmethod
     def channel_shuffle(x, groups):
         """
-        通道打乱操作，用于重排列通道。
+        通道打乱操作，用于重排列通道。使用静态微加速
         """
         batch_size, num_channels, height, width = x.size()
         assert num_channels % groups == 0, "通道数必须可以被组数整除"
@@ -230,7 +230,7 @@ class UCB(nn.Module):
         super(UCB, self).__init__()
 
         # 上采样（2倍，双线性插值）
-        self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+        self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True) # ConvTranspose
 
         # 深度可分离卷积 (Depthwise Separable Convolution, DWC)
         self.dw_conv = nn.Conv2d(in_channels, in_channels, kernel_size=3, stride=1, padding=1, groups=in_channels)
@@ -238,7 +238,7 @@ class UCB(nn.Module):
 
         # Batch Normalization 和 ReLU
         self.bn = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU(inplace=True)
+        self.relu = nn.ReLU(inplace=True) # GeLU, LeakRelU, ReLU6()
 
     def forward(self, x):
         # 执行上采样
@@ -255,13 +255,13 @@ class UCB(nn.Module):
         return x
 
 
-class BizareBlock(nn.Module):
+class CCBlock(nn.Module):
     """
-    This class is controlled by the in_channel and out_channel arguments, to control the number of channels
+    连续卷积模块
     """
 
     def __init__(self, in_channel, out_channel):
-        super(BizareBlock, self).__init__()
+        super(CCBlock, self).__init__()
         self.layer = nn.Sequential(
             nn.Conv2d(in_channel, out_channel, 3, 1, 1, padding_mode='reflect', bias=False),
             nn.BatchNorm2d(out_channel),
@@ -317,19 +317,19 @@ class BNet(nn.Module):
 
     def __init__(self, num_classes=1):
         super(BNet, self).__init__()
-        self.cc1 = BizareBlock(3, 64)
+        self.cc1 = CCBlock(3, 64)
         self.dag1 = DAG(64)
         self.down1 = DownSample(64)
 
-        self.cc2 = BizareBlock(64, 128)
+        self.cc2 = CCBlock(64, 128)
         self.dag2 = DAG(128)
         self.down2 = DownSample(128)
 
-        self.cc3 = BizareBlock(128, 256)
+        self.cc3 = CCBlock(128, 256)
         self.dag3 = DAG(256)
         self.d3 = DownSample(256)
 
-        self.cc4 = BizareBlock(256, 512)  # 512*32*32
+        self.cc4 = CCBlock(256, 512)  # 512*32*32
 
         self.pham1 = PHAM(512)
         self.ucb1 = UCB(512, 256)  # 同时缩减通道维度并扩张空间维度, (256,64,64)

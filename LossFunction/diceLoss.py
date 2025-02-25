@@ -47,7 +47,7 @@ class DiceLoss(nn.Module):
             inputs = torch.sigmoid(inputs)
             inputs = torch.cat([1 - inputs, inputs], dim=1) # 第一通道为 1 - p，第二通道为 p
         else:
-        # 多分类任务，使用 softmax 归一化
+            # 多分类任务，使用 softmax 归一化
             inputs = torch.softmax(inputs, dim=1)
 
         # 确保输入 `inputs` 和 `target` 形状匹配

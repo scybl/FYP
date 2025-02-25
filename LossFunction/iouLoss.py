@@ -31,7 +31,7 @@ class IoULoss(nn.Module):
 
         assert inputs.shape == target_onehot.shape, f"Shape mismatch: {inputs.shape} vs {target_onehot.shape}"
 
-        # 计算 IoU
+        # 计算 IoU（0，1，2，3），(N,C,H,W)
         dims = (2, 3)  # 假设输入为 2D 图像 (H,W)
         intersection = torch.sum(inputs * target_onehot, dim=dims)
         union = torch.sum(inputs, dim=dims) + torch.sum(target_onehot, dim=dims) - intersection
