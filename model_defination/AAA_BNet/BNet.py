@@ -5,7 +5,6 @@ from torch.nn import functional as F
 """
 这个是所有的B-Net架构的内容，我将所有封装的模块都写在这里，方便后续更改
 """
-# TODO：看看能不能做一个深度监督出来
 
 class DAG(nn.Module):
     def __init__(self, channels, dilation_rate=2, dropout_rate=0.3):
@@ -315,8 +314,9 @@ class BNet(nn.Module):
     according to the channel num to do
     """
 
-    def __init__(self, num_classes=1):
+    def __init__(self, num_classes=1, deep_supervisor = True):
         super(BNet, self).__init__()
+        self.supervisor = deep_supervisor
         self.cc1 = CCBlock(3, 64)
         self.dag1 = DAG(64)
         self.down1 = DownSample(64)
@@ -350,19 +350,24 @@ class BNet(nn.Module):
         R3 = self.cc3(self.down2(R2))
         R4 = self.cc4(self.d3(R3))
 
-        U1 = self.ucb1(self.pham1(R4))
+        out1 = self.pham1(R4)
 
+        U1 = self.ucb1(out1)
         Dag1 = self.dag3(R3, U1)
-        plus1_out = Dag1 + U1
 
-        U2 = self.ucb2(self.pham2(plus1_out))
+        out2 = self.pham2(Dag1 + U1)
+
+        U2 = self.ucb2(out2)
         Dag2 = self.dag2(R2, U2)
-        plus2_out = Dag2 + U2
 
-        U3 = self.ucb3(self.pham3(plus2_out))
+        out3 = self.pham3(Dag2 + U2)
+
+        U3 = self.ucb3(out3)
         Dag3 = self.dag1(R1, U3)
-        plus3_out = Dag3 + U3
 
-        pham4_out = self.pham4(plus3_out)
+        out4 = self.convFinal1(self.pham4(Dag3 + U3))
 
-        return self.convFinal1(pham4_out)
+        if self.supervisor:
+            return [out1, out2, out3, out4]
+        else:
+            return out4
