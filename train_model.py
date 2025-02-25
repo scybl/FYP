@@ -1,6 +1,5 @@
 import os
 import torch
-from monai.networks import one_hot
 from LoadData.data import get_dataset
 from LoadData.utils import load_config
 from LossFunction.LearningRate import PolyWarmupScheduler
@@ -32,6 +31,7 @@ device = torch.device(config['device'] if torch.cuda.is_available() else "cpu")
 # TODO：看一下transunet的数据集加载部分，用这个替换一下
 # TransUnet Snapse https://github.com/Beckschen/TransUNet/blob/main/datasets/dataset_synapse.py
 # # 30 组,  18train.  12 测试
+
 if __name__ == "__main__":
     # 加载数据
     data_loader = get_dataset(config, 'train')
@@ -79,14 +79,15 @@ if __name__ == "__main__":
 
         for i, (image, segment_image) in enumerate(data_loader):
             image, segment_image = image.to(device), segment_image.to(device)
-
             # 前向传播
             out_image = net(image)
 
+            torch.set_printoptions(threshold=float('inf'))  # 设置阈值为无限，显示所有元素
             # 看一下数据的size是否相同，如果相同则可以继续进行
             # print("image size: "+ f"{image.size()}")
             # print("out_image size: "+ f"{out_image.size()}")
             # print("mask image size:  "f"{segment_image.size()}")
+
             train_loss = loss_fn(out_image, segment_image)  # 所有的数据类型都是tensor float
 
             opt.zero_grad()

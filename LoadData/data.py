@@ -1,16 +1,15 @@
-from LoadData.Synapse_Dataset import Synapse_Dataset
 from LoadData.ClinicDB_Dataset import ClinicDB_Dataset
 from LoadData.ISIC2018_Dataset import ISIC2018_DataSet
 from torch.utils.data import DataLoader
 
 from LoadData.KvasirSEG_Dataset import KvasirSEG_Dataset
+from LoadData.Synapse_Dataset import Synapse_Dataset
 
 
 class LabelProcessor:
     """
     标签预处理器：将标签转换为指定的通道数，确保标签格式符合网络需求
     """
-
     def __init__(self, class_num=1):
         self.class_num = class_num
 
@@ -54,7 +53,6 @@ def get_dataset(config, mode):
         dataset_class = ClinicDB_Dataset
     elif dataset_name.lower() == 'synapse':
         dataset_class = Synapse_Dataset
-        # TODO: 四个数据集应该差不多了，看看后面还需不需要再加
     else:
         raise ValueError(f"Dataset '{dataset_name}' is not supported.")
 
@@ -63,21 +61,12 @@ def get_dataset(config, mode):
     shuffle = config["data_loader"]["shuffle"]
     num_workers = config["data_loader"]["num_workers"]
 
-    augmentations = dataset_config["augmentations"]
     print(f"Loading {mode} dataset: {dataset_name}, data augmentations has been loaded")
-    # TODO: 我的数据似乎没有进行归一化，后面检查一下
-    # 获取数据集的 class_num
-    class_num = dataset_config["class_num"]
 
     # 初始化数据集
-    dataset = dataset_class(
-        dataset_config,
-        augmentations,
-        class_num=class_num
-    )
+    dataset = dataset_class(dataset_config)
 
     # TODO:添加一个划分验证集，测试集，训练集的方法，根据config的配置来划分
-    # TODO：
     print(f"{dataset.__len__()}")
 
     data_all = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)

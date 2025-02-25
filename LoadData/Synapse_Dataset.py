@@ -1,81 +1,78 @@
-import numpy as np
 import os
-
-from PIL import Image
+import random
+import h5py
+import numpy as np
+import torch
+from scipy import ndimage
+from scipy.ndimage.interpolation import zoom
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
-from LoadData.assistance import build_transforms
-import torch
 
 """
-添加synapse数据集
+这个是synapse的数据集加载的替换
 """
-# 颜色映射表
-color_mapping = {
-    (0, 0, 0): 0,  # 黑色
-    (255, 255, 255): 1,  # 白色
-    (0, 0, 255): 2,  # 红色
-    (0, 255, 0): 3,  # 绿色
-    (255, 0, 0): 4,  # 蓝色
-    (0, 255, 255): 5,  # 黄色
-    (255, 0, 255): 6,  # 紫色
-    (255, 255, 0): 7  # 青色
-}
+
+def random_rot_flip(image, label):
+    k = np.random.randint(0, 4)
+    image = np.rot90(image, k)
+    label = np.rot90(label, k)
+    axis = np.random.randint(0, 2)
+    image = np.flip(image, axis=axis).copy()
+    label = np.flip(label, axis=axis).copy()
+    return image, label
+
+
+def random_rotate(image, label):
+    angle = np.random.randint(-20, 20)
+    image = ndimage.rotate(image, angle, order=0, reshape=False)
+    label = ndimage.rotate(label, angle, order=0, reshape=False)
+    return image, label
+
+
+class RandomGenerator(object):
+    def __init__(self, output_size):
+        self.output_size = output_size
+
+    def __call__(self, sample):
+        image, label = sample['image'], sample['label']
+
+        if random.random() > 0.5:
+            image, label = random_rot_flip(image, label)
+        elif random.random() > 0.5:
+            image, label = random_rotate(image, label)
+        x, y = image.shape
+        if x != self.output_size[0] or y != self.output_size[1]:
+            image = zoom(image, (self.output_size[0] / x, self.output_size[1] / y), order=3)  # why not 3?
+            label = zoom(label, (self.output_size[0] / x, self.output_size[1] / y), order=0)
+        image = torch.from_numpy(image.astype(np.float32)).unsqueeze(0)
+        label = torch.from_numpy(label.astype(np.float32))
+        sample = {'image': image, 'label': label.long()}
+        return sample
+
 
 
 class Synapse_Dataset(Dataset):
-
-    def __init__(self, config, augmentations, class_num=8):
-        self.config = config
-        self.image_dir = os.path.join(self.config["dataset_path"], self.config["img"])
-        self.image_names = [f for f in os.listdir(self.image_dir) if f.endswith('.png')]
-
-        self.mask_dir = os.path.join(self.config["dataset_path"], self.config["mask"])
-        self.mask_names = [f for f in os.listdir(self.mask_dir) if f.endswith('.png')]  # 显式过滤TIF文件
-
-        self.class_num = class_num
-
-        # 同步数据增强组件
-        self.transforms = build_transforms(augmentations)
-
-        # TIF特殊处理：可能需要添加Alpha通道处理（根据实际数据情况）
+    def __init__(self, config, split='train'):
+        self.split = split
+        self.list_dir = config["list_dir"]
+        self.sample_list = open(os.path.join(self.list_dir, self.split + '.txt')).readlines()
+        self.data_dir = config["root_path"]
         self.to_tensor = transforms.ToTensor()
 
     def __len__(self):
-        return len(self.mask_names)
+        return len(self.sample_list)
 
-    def __getitem__(self, index):
-        # 获取图像和分割标签路径
-        segment_name = self.mask_names[index]
-        segment_path = os.path.join(self.mask_dir, segment_name)
-        image_path = os.path.join(self.image_dir, segment_name)
+    def __getitem__(self, idx):
+        case_name = self.sample_list[idx].strip('\n') # 获取样本名称
 
-        # **加载原始图像**
-        img_image = Image.open(image_path).convert("RGB")  # 确保 image 为 3 通道
-        segment_image = Image.open(segment_path).convert("RGB")  # 以 RGB 加载分割图像\
+        if self.split == "train":
+            data_path = os.path.join(self.data_dir, case_name + '.npz')
+            data = np.load(data_path)
+            image, label = data['image'], data['label']
+        else:
+            filepath = os.path.join(self.data_dir, f"{case_name}.npy.h5")
+            with h5py.File(filepath, 'r') as data: # 以只读模式打开
+                image, label = np.array(data['image']), np.array(data['label'])
 
-        img_image, segment_image = self.transforms(img_image, segment_image)  # 数据增强
 
-        # **转换为 Tensor**
-        img_image = self.to_tensor(img_image)  # 变为 (3, H, W)
-
-        # 转换segment_image为one-hot tensor
-        segment_array = np.array(segment_image)  # (H, W, 3)
-
-        # 创建初始mask
-        h, w = segment_array.shape[:2]
-        mask = np.zeros((h, w), dtype=np.uint8)
-
-        # 根据颜色映射填充类别
-        for color, class_id in color_mapping.items():
-            # 使用向量化操作提升性能
-            mask[np.all(segment_array == color, axis=-1)] = class_id
-
-        # 转换为tensor并生成one-hot编码
-        mask_tensor = torch.from_numpy(mask).long()
-        one_hot = torch.nn.functional.one_hot(
-            mask_tensor,
-            num_classes=self.class_num
-        ).permute(2, 0, 1).float()  # (C, H, W)
-
-        return img_image, one_hot  # 形状: (3, H, W), (8, H, W)
+        return image, label

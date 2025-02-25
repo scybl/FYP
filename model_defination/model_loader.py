@@ -46,22 +46,16 @@ def get_best_or_latest_model_path(model_path, model_name):
 
 
 class_num = config["datasets"][config['setting']["dataset_name"]]["class_num"]
-
+in_channel = config["datasets"][config['setting']["dataset_name"]]["in_channel"]
 # 模型映射表
 model_mapping = {
     # TODO：模型我想添加
     # TODO：duck-net https://github.com/RazvanDu/DUCK-Net
     # TODO: nn-unet https://github.com/MIC-DKFZ/nnUNet
-    "bnet": lambda: BNet(class_num),
-    "unet": lambda: UNetBase(class_num),
-    "AAA_unetpp": lambda: UnetPP(class_num),
+    "bnet": lambda: BNet( in_channel=in_channel, num_classes=class_num),
+    "unet": lambda: UNetBase(in_channel=in_channel,class_num=class_num),
+    "unetpp": lambda: UnetPP(class_num),
     "duck": lambda: DuckNet(class_num),
-
-    # "res50": lambda: ResNet50(class_num),
-    # "res101": lambda: ResNet101(class_num),
-    # "res152": lambda: ResNet152(class_num),
-    # "fcn_8s": lambda: FCN8s(class_num),
-
 }
 
 

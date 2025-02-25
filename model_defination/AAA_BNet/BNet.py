@@ -314,10 +314,10 @@ class BNet(nn.Module):
     according to the channel num to do
     """
 
-    def __init__(self, num_classes=1, deep_supervisor = True):
+    def __init__(self, in_channel, num_classes=1, deep_supervisor = True):
         super(BNet, self).__init__()
         self.supervisor = deep_supervisor
-        self.cc1 = CCBlock(3, 64)
+        self.cc1 = CCBlock(in_channel, 64)
         self.dag1 = DAG(64)
         self.down1 = DownSample(64)
 

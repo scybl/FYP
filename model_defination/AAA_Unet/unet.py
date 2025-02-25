@@ -10,11 +10,11 @@ class UNetBase(nn.Module):
     the changed point is change the max pool to the 2-size conv core
     """
 
-    def __init__(self, class_num=1):
+    def __init__(self, in_channel, class_num=1):
         super(UNetBase, self).__init__()
         # ------开始下采样
         self.layer1 = nn.Sequential(
-            ConvBlock(3, 64, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock(in_channel, 64, 3, 1, 1, "reflect", False, 0.3),
             ConvBlock(64, 64, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
                       bias=False, dropout_rate=0.3)
         )

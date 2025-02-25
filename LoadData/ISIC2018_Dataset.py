@@ -11,17 +11,17 @@ from LoadData.assistance import build_transforms
 
 
 class ISIC2018_DataSet(Dataset):
-    def __init__(self, config, augmentations, transform_label=None, class_num=1):
+    def __init__(self, config):
         self.config = config
         self.mask_name = os.listdir(os.path.join(self.config["dataset_path"], self.config["mask"]))
-        self.transform_label = transform_label  # 保留 transform_label
-        self.class_num = class_num
+        self.class_num = config["class_num"]
 
         # **使用 SynchronizedTransform 进行同步数据增强**
-        self.transforms = build_transforms(augmentations)
+        self.transforms = build_transforms(config['augmentations'])# 保留 transform_label
 
         # **确保最终数据转换为 Tensor**
         self.to_tensor = transforms.ToTensor()
+        self.transform_label = None
 
     def __len__(self):
         return len(self.mask_name)
