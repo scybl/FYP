@@ -9,6 +9,10 @@ loss_fn = loss_hub.get_loss_function()
 loss_hub = LossFunctionHub(loss_name="cross_entropy", weight=None)
 loss_fn = loss_hub.get_loss_function()
 """
+
+
+# MONAI https://docs.monai.io/en/stable/losses.html 用这个包
+
 class LossFunctionHub:
     def __init__(self, loss_name="dice_ce", **kwargs):
         """
@@ -68,5 +72,7 @@ class LossFunctionHub:
                 reduction=self.kwargs.get("reduction", "mean"),
             )
 
+        elif self.loss_name == "bce":
+            return nn.BCEWithLogitsLoss()
         else:
             raise ValueError(f"Unsupported loss function: {self.loss_name}")

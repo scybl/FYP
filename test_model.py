@@ -3,7 +3,6 @@ import numpy as np
 from torch import nn
 from LoadData.data import get_dataset
 from LoadData.utils import load_config
-from LossFunction.DiceCE import DiceCE
 from model_defination.model_loader import load_model
 import os
 import csv

@@ -314,7 +314,7 @@ class BNet(nn.Module):
     according to the channel num to do
     """
 
-    def __init__(self, in_channel, num_classes=1, deep_supervisor = True):
+    def __init__(self, in_channel, num_classes, deep_supervisor = False):
         super(BNet, self).__init__()
         self.supervisor = deep_supervisor
         self.cc1 = CCBlock(in_channel, 64)
@@ -343,6 +343,7 @@ class BNet(nn.Module):
         self.pham4 = PHAM(64)
 
         self.convFinal1 = nn.Conv2d(64, num_classes, 1)
+
 
     def forward(self, _x):
         R1 = self.cc1(_x)

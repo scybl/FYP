@@ -1,112 +1,101 @@
 import os
 import torch
+from torchvision.utils import save_image
+
 from LoadData.data import get_dataset
 from LoadData.utils import load_config
 from LossFunction.LearningRate import PolyWarmupScheduler
 from LossFunction.LossChoose import LossFunctionHub
-from model_defination.model_loader import load_model
+from model_defination.model_loader import load_model, get_model_hub
 from torch.optim import AdamW
 
-
-def print_tensor_size(name, tensor):
-    if tensor is None:
-        print(f"{name}: Tensor is None")
-    else:
-        print(f"{name}: Size: {tensor.size()}, Device: {tensor.device}")
-
-#锁定参数
-
-# load the config file
-CONFIG_NAME = "config_train.yaml"
-CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
-config = load_config(CONFIG_PATH)
-
-class_num = config["datasets"][config["setting"]["dataset_name"]]["class_num"]
-
-device = torch.device(config['device'] if torch.cuda.is_available() else "cpu")
-
-# TODO： 作一下encoder的部分，调用一个预训练模型
-# # encoder: 换ConvNeXt V2, load 参数
-
-# TODO：看一下transunet的数据集加载部分，用这个替换一下
-# TransUnet Snapse https://github.com/Beckschen/TransUNet/blob/main/datasets/dataset_synapse.py
-# # 30 组,  18train.  12 测试
-
-if __name__ == "__main__":
-    # 加载数据
-    data_loader = get_dataset(config, 'train')
-    save_model_path = os.path.join(config['model']["save_path"], config["model"]['name'])
-
-    # 加载模型
-    train_config = config["setting"]
-    net = load_model(config, 'train')
-
-    # opt = optim.Adam(net.parameters(), lr=train_config['lr'])
-    opt = AdamW(net.parameters(), lr=train_config['lr'], betas=(0.99, 0.95))
-    # 使用adamw优化器这个效果更好 AdamW, beta = (0.99, 0.95)
-    # • AdamW 比 Adam 更适合现代深度学习任务，因为：
-    # • 它使用 权重衰减（weight decay），可以 避免过拟合。
-    # • 适用于 Transformer 和 CNN 任务。
-    # • beta 参数 (0.99, 0.95) 更适合大规模训练。
-
-
-    # MONAI https://docs.monai.io/en/stable/losses.html 用这个包
-    loss_hub = LossFunctionHub(loss_name="dice_ce",include_background = True, to_onehot_y=False, softmax=True)
-    loss_fn = loss_hub.get_loss_function()
-    # loss_hub = LossFunctionHub(loss_name="cross_entropy", weight=None)
-    # loss_fn = loss_hub.get_loss_function()
-
-
-    # TODO: 更改一下学习率
-    # Poly Strategy, H2Former，
-    # warmup, 训练 K 轮之后，lr再降低， Spark: https://github.com/keyu-tian/SparK/blob/main/pretrain/utils/lr_control.py, warm-up 锁定，K轮次之后再降低lr
-    scheduler = PolyWarmupScheduler(
-        optimizer=opt,
-        warmup_epochs=train_config['warmup_epochs'],
-        total_epochs=train_config['epochs'],
-        initial_lr=train_config['lr'],
+class Trainer:
+    def __init__(self, config_path):
+        self.config = load_config(config_path)
+        self.device = torch.device(self.config['device'] if torch.cuda.is_available() else "cpu")
+        self.class_num = self.config["datasets"][self.config["setting"]["dataset_name"]]["class_num"]
+        self.data_loader = get_dataset(self.config, 'train')
+        self.net = load_model(self.config, 'train').to(self.device)
+        self.opt = AdamW(self.net.parameters(), lr=self.config["setting"]['lr'], betas=(0.99, 0.95)) # AdamW 比 Adam 更适合现代深度学习任务，因为：
+        # self.loss_hub = LossFunctionHub(loss_name="dice_ce", include_background=True, to_onehot_y=False, softmax=True) # 多分类
+        self.loss_hub = LossFunctionHub(loss_name='bce')
+        self.loss_fn = self.loss_hub.get_loss_function()
+        self.scheduler = PolyWarmupScheduler(
+        optimizer=self.opt,
+        warmup_epochs=self.config["setting"]['warmup_epochs'],
+        total_epochs=self.config["setting"]['epochs'],
+        initial_lr=self.config["setting"]['lr'],
         power=0.9,
-        eta_min=train_config['eta_min']
-    )
+        eta_min=self.config["setting"]['eta_min']
+        )
+        self.save_model_path = os.path.join(self.config['model']["save_path"], self.config["model"]['name'])
+        self.loss_log_path = os.path.join(self.config['model']['save_path'], f"train_loss_log_{self.config['model']['name']}.csv")
+        self._init_log_file()
 
-    # 日志路径
-    loss_log_path = os.path.join(config['model']['save_path'], f"train_loss_log_{config['model']['name']}.csv")
-    with open(loss_log_path, "w") as f:
-        f.write("epoch,step,train_loss\n")  # 记录表头
+    def _init_log_file(self):
+        with open(self.loss_log_path, "w") as f:
+            f.write("epoch,step,train_loss\n")
 
-    epochs = 1
-    while epochs <= train_config['epochs']:
+    def train(self):
+        epochs = 1
+        while epochs <= self.config["setting"]['epochs']:
+            for i, (image, segment_image) in enumerate(self.data_loader):
+                image, segment_image = image.to(self.device), segment_image.to(self.device)
+                out_image = self.net(image)
+                # print(f'image的大小为: f{image.size()}')
+                # print(f'mask的大小为: f{segment_image.size()}')
+                # print(f'out_img的大小为: f{out_image.size()}')
 
-        for i, (image, segment_image) in enumerate(data_loader):
-            image, segment_image = image.to(device), segment_image.to(device)
-            # 前向传播
-            out_image = net(image)
+                train_loss = self.loss_fn(out_image, segment_image)
 
-            torch.set_printoptions(threshold=float('inf'))  # 设置阈值为无限，显示所有元素
-            # 看一下数据的size是否相同，如果相同则可以继续进行
-            # print("image size: "+ f"{image.size()}")
-            # print("out_image size: "+ f"{out_image.size()}")
-            # print("mask image size:  "f"{segment_image.size()}")
+                self.opt.zero_grad()
+                train_loss.backward()
+                self.opt.step()
 
-            train_loss = loss_fn(out_image, segment_image)  # 所有的数据类型都是tensor float
+                # 保存日志
+                with open(self.loss_log_path, "a") as f:
+                    f.write(f"{epochs},{i},{train_loss.item():.6f}\n")
+##############################################################################################
+                # 保存图像，用于可视化
+                _image = image[0]
+                _segment_image = segment_image[0]
+                _out_image = out_image[0]
 
-            opt.zero_grad()
-            train_loss.backward()
-            opt.step()
+                _segment_image = _segment_image.repeat(3, 1, 1)  # 重复 3 次通道，大小变为 [3, 256, 256]
+                _out_image = _out_image.repeat(3, 1, 1)  # 重复 3 次通道，大小变为 [3, 256, 256]
 
-            # 保存日志 (每个 batch 记录一次)
-            with open(loss_log_path, "a") as f:
-                f.write(f"{epochs},{i},{train_loss.item():.6f}\n")
+                img = torch.stack([_image, _segment_image, _out_image], dim=0)
+                save_image(img, os.path.join(self.config['save_image_path'],f"{self.config['model']['name']}_{self.config['setting']['dataset_name']}_{i}.png"))
+###############################################################################################
 
-            # 打印训练信息
-            current_lr = opt.param_groups[0]['lr']
-            print(f"Epoch {epochs} --- Step {i} --- Loss: {train_loss.item():.6f} --- LR: {current_lr:.6f}")
+                # 打印训练信息
+                current_lr = self.opt.param_groups[0]['lr']
+                print(f"Epoch {epochs} --- Step {i} --- Loss: {train_loss.item():.6f} --- LR: {current_lr:.6f}")
 
-        # 每个epoch保存一个模型
-        torch.save(net.state_dict(), f"{save_model_path}_{epochs}.pth")
+            # 每个epoch保存一个模型
+            torch.save(self.net.state_dict(), f"{self.save_model_path}_{self.config['setting']['dataset_name']}_{epochs}.pth")
 
-        # **在 epoch 级更新学习率**
-        scheduler.step()
-        epochs += 1
+            # 更新学习率
+            self.scheduler.step()
+            epochs += 1
 
+# 运行训练
+if __name__ == "__main__":
+    model_config_list = [
 
+        "config_train_unet_kvasir.yaml",
+        "config_train_bnet_kvasir.yaml",
+
+        "config_train_unet_isic2018.yaml",
+        "config_train_bnet_isic2018.yaml",
+
+        # "config_train_unet_clinicdb.yaml",
+        # "config_train_bnet_clinicdb.yaml",
+        # "config_train_bnet_synapse.yaml",
+        # "config_train_unet_synapse.yaml",
+    ]
+
+    for CONFIG_NAME in model_config_list:
+        CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
+        trainer = Trainer(CONFIG_PATH)
+        trainer.train()

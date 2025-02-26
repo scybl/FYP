@@ -92,7 +92,6 @@ class UNetBase(nn.Module):
         O1 = self.layer6(self.up1(L5, L4))
         O2 = self.layer7(self.up2(O1, L3))
         O3 = self.layer8(self.up3(O2, L2))
-
         O4 = self.layer9(self.up4(O3, L1))
 
         return self.out(O4)  # 所谓图像分割就是生成一个预期的图片，这个图片大小与输入的图片大小相等

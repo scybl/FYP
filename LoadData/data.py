@@ -66,7 +66,6 @@ def get_dataset(config, mode):
     # 初始化数据集
     dataset = dataset_class(dataset_config)
 
-    # TODO:添加一个划分验证集，测试集，训练集的方法，根据config的配置来划分
     print(f"{dataset.__len__()}")
 
     data_all = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)

@@ -1,0 +1,44 @@
+device: "cuda"  # cpu/ cuda
+model:
+  name: "bnet" # 默认的，必须要有，会被实际参数替换
+  save_path: "params/"  # weight saving path
+
+# 保存训练结果
+save_pic: False
+save_image_path: "saved_images"  # save the predicted pic
+
+# 数据加载器配置
+data_loader:
+  batch_size: 16
+  shuffle: true
+  num_workers: 16
+
+# 训练配置
+setting:
+  dataset_name: "clinicdb"
+  epochs: 100
+
+  lr: 0.0001
+  power: 0.9
+  eta_min: 0.000001
+  warmup_epochs: 10
+
+
+# 数据集公共配置
+# 由于不同数据可能会使用不同的增强方式
+# 所以将增强的定义放在这里管理
+datasets:
+  clinicdb:
+    size: 224
+    class_num: 1
+    in_channel: 3
+    dataset_path: "LoadData"
+    img: "CVC-ClinicDB/Original"
+    mask: "CVC-ClinicDB/Ground Truth"
+    augmentations: {
+      "geometric_transforms": [
+        { "type": "Resize", "params": { "size": [ 224, 224 ] } }
+      ],
+      "color_transforms": [
+      ]
+    }
