@@ -1,7 +1,5 @@
-import torch.optim as optim
-
 class PolyWarmupScheduler:
-    def __init__(self, optimizer, warmup_epochs, total_epochs, initial_lr, power=0.9, eta_min=1e-6):
+    def __init__(self, optimizer, warmup_epochs, total_epochs, initial_lr, power, eta_min):
         """
         Poly + Warmup 学习率调度器
         :param optimizer: 训练使用的优化器
@@ -26,6 +24,7 @@ class PolyWarmupScheduler:
         if self.current_epoch < self.warmup_epochs:
             # **Warmup阶段：线性增加学习率**
             lr = self.eta_min + (self.initial_lr - self.eta_min) * (self.current_epoch / self.warmup_epochs)
+            print(lr)
         else:
             # **Poly Decay阶段**
             poly_factor = (1 - (self.current_epoch - self.warmup_epochs) / (self.total_epochs - self.warmup_epochs)) ** self.power

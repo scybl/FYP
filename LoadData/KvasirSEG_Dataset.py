@@ -2,7 +2,8 @@ import torch.utils.data as data
 from PIL import Image
 import os
 import torchvision.transforms as transforms
-from LoadData.assistance import build_transforms
+
+from LoadData.utils import build_transforms
 
 
 class KvasirSEG_Dataset(data.Dataset):

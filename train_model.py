@@ -6,7 +6,7 @@ from LoadData.data import get_dataset
 from LoadData.utils import load_config
 from LossFunction.LearningRate import PolyWarmupScheduler
 from LossFunction.LossChoose import LossFunctionHub
-from model_defination.model_loader import load_model, get_model_hub
+from model_defination.model_loader import load_model
 from torch.optim import AdamW
 
 class Trainer:
@@ -16,18 +16,21 @@ class Trainer:
         self.class_num = self.config["datasets"][self.config["setting"]["dataset_name"]]["class_num"]
         self.data_loader = get_dataset(self.config, 'train')
         self.net = load_model(self.config, 'train').to(self.device)
-        self.opt = AdamW(self.net.parameters(), lr=self.config["setting"]['lr'], betas=(0.99, 0.95)) # AdamW 比 Adam 更适合现代深度学习任务，因为：
+
         # self.loss_hub = LossFunctionHub(loss_name="dice_ce", include_background=True, to_onehot_y=False, softmax=True) # 多分类
         self.loss_hub = LossFunctionHub(loss_name='bce')
         self.loss_fn = self.loss_hub.get_loss_function()
+
+        self.opt = AdamW(self.net.parameters(), lr=self.config["setting"]['min_lr'], betas=(0.99, 0.95)) # AdamW 比 Adam 更适合现代深度学习任务，因为：
         self.scheduler = PolyWarmupScheduler(
-        optimizer=self.opt,
-        warmup_epochs=self.config["setting"]['warmup_epochs'],
-        total_epochs=self.config["setting"]['epochs'],
-        initial_lr=self.config["setting"]['lr'],
-        power=0.9,
-        eta_min=self.config["setting"]['eta_min']
+            optimizer=self.opt,
+            warmup_epochs=self.config["setting"]['warmup_epochs'],
+            total_epochs=self.config["setting"]['epochs'],
+            initial_lr=self.config["setting"]['max_lr'],
+            power=0.9,
+            eta_min=self.config["setting"]['min_lr']
         )
+
         self.save_model_path = os.path.join(self.config['model']["save_path"], self.config["model"]['name'])
         self.loss_log_path = os.path.join(self.config['model']['save_path'], f"train_loss_log_{self.config['model']['name']}.csv")
         self._init_log_file()
@@ -55,6 +58,7 @@ class Trainer:
                 # 保存日志
                 with open(self.loss_log_path, "a") as f:
                     f.write(f"{epochs},{i},{train_loss.item():.6f}\n")
+
 ##############################################################################################
                 # 保存图像，用于可视化
                 _image = image[0]
@@ -70,6 +74,7 @@ class Trainer:
 
                 # 打印训练信息
                 current_lr = self.opt.param_groups[0]['lr']
+                assert current_lr == self.scheduler.get_lr(), f"不相等,检查问题current_lr:{current_lr}, scheduler_lr:{self.scheduler.get_lr()}"
                 print(f"Epoch {epochs} --- Step {i} --- Loss: {train_loss.item():.6f} --- LR: {current_lr:.6f}")
 
             # 每个epoch保存一个模型
@@ -82,17 +87,20 @@ class Trainer:
 # 运行训练
 if __name__ == "__main__":
     model_config_list = [
+        # 调试完成,没有什么问题
+        # "config_train_unet_isic2018.yaml",
+        # "config_train_bnet_isic2018.yaml",
 
+        # TODO: 训练结果全黑,不知道为啥,注意已将epoch改为20
         "config_train_unet_kvasir.yaml",
         "config_train_bnet_kvasir.yaml",
 
-        "config_train_unet_isic2018.yaml",
-        "config_train_bnet_isic2018.yaml",
+        "config_train_unet_clinicdb.yaml",
+        "config_train_bnet_clinicdb.yaml",
 
-        # "config_train_unet_clinicdb.yaml",
-        # "config_train_bnet_clinicdb.yaml",
-        # "config_train_bnet_synapse.yaml",
         # "config_train_unet_synapse.yaml",
+        # "config_train_bnet_synapse.yaml",
+
     ]
 
     for CONFIG_NAME in model_config_list:

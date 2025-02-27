@@ -3,7 +3,7 @@ from torch.utils.data import Dataset
 from PIL import Image
 import torchvision.transforms as transforms
 
-from LoadData.assistance import build_transforms
+from LoadData.utils import build_transforms
 
 """
 读取isic2018，返回img/mask的tensor类
@@ -17,7 +17,7 @@ class ISIC2018_DataSet(Dataset):
         self.class_num = config["class_num"]
 
         # **使用 SynchronizedTransform 进行同步数据增强**
-        self.transforms = build_transforms(config['augmentations'])# 保留 transform_label
+        self.transforms = build_transforms(config['augmentations'])
 
         # **确保最终数据转换为 Tensor**
         self.to_tensor = transforms.ToTensor()
