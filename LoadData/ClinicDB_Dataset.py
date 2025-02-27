@@ -1,11 +1,11 @@
-import numpy as np
 import os
 
 import tifffile as tiff
-from PIL import Image
 from torch.utils.data import Dataset
 import torchvision.transforms as transforms
-from LoadData.assistance import build_transforms
+from PIL import Image
+
+from LoadData.utils import build_transforms
 
 
 class ClinicDB_Dataset(Dataset):
@@ -20,13 +20,10 @@ class ClinicDB_Dataset(Dataset):
 
         self.mask_dir = os.path.join(self.config["dataset_path"], self.config["mask"])
         self.mask_names = [f for f in os.listdir(self.mask_dir) if f.endswith('.tif')]  # 显式过滤TIF文件
-        self.transform_label = None
         self.class_num = config["class_num"]
 
-        # 同步数据增强组件
         self.transforms = build_transforms(config['augmentations'])
 
-        # TIF特殊处理：可能需要添加Alpha通道处理（根据实际数据情况）
         self.to_tensor = transforms.ToTensor()
 
     def __len__(self):
@@ -40,30 +37,14 @@ class ClinicDB_Dataset(Dataset):
         image_path = os.path.join(self.image_dir, image_name)
 
         # 读取TIF图像
-        image = tiff.imread(image_path)
-        mask = tiff.imread(mask_path)
+        image = tiff.imread(image_path) # ndarray [288,384,3] ,是一个三通道图片
+        mask = tiff.imread(mask_path) # ndarray [288,384],是一个单通道图片
 
-        # 处理掩码维度
-        if len(mask.shape) == 2:
-            mask = np.expand_dims(mask, axis=-1)
-        mask = mask.squeeze()  # 从 (H, W, 1) 转为 (H, W)
+        image = Image.fromarray(image)
+        mask = Image.fromarray(mask)
 
-        # 转换为PIL.Image
-        # 确保图像数据为uint8类型（假设原始数据范围0-255）
-        image_pil = Image.fromarray(image.astype(np.uint8))
-        # 处理掩码数据（假设掩码0/1，转换为0/255）
-        mask = (mask * 255).astype(np.uint8)
-        mask_pil = Image.fromarray(mask, mode='L')  # 'L'模式表示8位灰度
+        image,mask = self.transforms(image,mask)
+        image = self.to_tensor(image)
+        mask = self.to_tensor(mask)
 
-        # 应用数据增强
-        image_aug, mask_aug = self.transforms(image=image_pil, mask=mask_pil)
-
-        # 转换为Tensor
-        image_tensor = transforms.ToTensor()(image_aug)
-        mask_tensor = transforms.ToTensor()(mask_aug)  # 自动转换为[C, H, W]
-
-        # 可选标签变换
-        if self.transform_label:
-            mask_tensor = self.transform_label(mask_tensor)
-
-        return image_tensor, mask_tensor
+        return image, mask

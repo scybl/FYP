@@ -1,12 +1,10 @@
 import os
-import random
 import h5py
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-import torchvision.transforms as transforms
 
-from LoadData.assistance import build_transforms
+from LoadData.utils import build_transforms
 
 """
 这个是synapse的数据集加载的替换
