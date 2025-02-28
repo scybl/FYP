@@ -26,12 +26,16 @@ class SegmentationEvaluator:
         # 加载配置文件
         self.net = None
         self.config = load_config(config_path)
-        set_seed(self.config["test_setting"]['seed'])
+        set_seed(self.config["setting"]['seed'])
         self.device = torch.device(self.config['device'] if torch.cuda.is_available() else "cpu")
         self.model_path = self.config['model'][('save_path')]
         self.model_name = self.config['model']['name']
         self.data_loader = get_dataset(self.config, 'test')
-        self.loss_fn = nn.CrossEntropyLoss() # 从BSC环城cross entropy 损失
+
+        dataset_name = self.config['setting']['dataset_name']
+        class_num = self.config["datasets"][dataset_name]['class_num']
+
+        self.loss_fn = DiceCE(class_num)
 
     def load_model(self, model_path):
         """加载模型权重"""
@@ -75,7 +79,6 @@ class SegmentationEvaluator:
 
             self.net = self.load_model(model_path)
             self.net.eval()
-
 
             total_loss = 0
             total_dice = 0

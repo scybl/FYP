@@ -1,14 +1,15 @@
-
+from LoadData.ClinicDB_Dataset import ClinicDB_Dataset
+from LoadData.ISIC2018_Dataset import ISIC2018_DataSet
 from torch.utils.data import DataLoader
 
-from LoadData.Kvasir_SEG import Kvasir_SEG_DataSet
-from LoadData.ISIC2018 import ISIC2018_DataSet
+from LoadData.KvasirSEG_Dataset import KvasirSEG_Dataset
+from LoadData.Synapse_Dataset import Synapse_Dataset
+
 
 class LabelProcessor:
     """
     标签预处理器：将标签转换为指定的通道数，确保标签格式符合网络需求
     """
-
     def __init__(self, class_num=1):
         self.class_num = class_num
 
@@ -41,14 +42,17 @@ def get_dataset(config, mode):
         raise ValueError(f"Unsupported mode '{mode}'. Use 'train' or 'test'.")
 
     # 选择不同模式下的 dataset_name
-    dataset_name = config["train_setting"]["dataset_name"] if mode=="train" else config["test_setting"]["dataset_name"]
+    dataset_name = config["setting"]["dataset_name"] if mode == "train" else config["setting"]["dataset_name"]
 
     # 如果数据集是 ISIC2018，加载特定数据集
     if dataset_name.lower() == "isic2018":
         dataset_class = ISIC2018_DataSet
-    elif dataset_name.lower() == "kvasir":
-        dataset_class = Kvasir_SEG_DataSet
-        
+    elif dataset_name.lower() == 'kvasir':
+        dataset_class = KvasirSEG_Dataset
+    elif dataset_name.lower() == 'clinicdb':
+        dataset_class = ClinicDB_Dataset
+    elif dataset_name.lower() == 'synapse':
+        dataset_class = Synapse_Dataset
     else:
         raise ValueError(f"Dataset '{dataset_name}' is not supported.")
 
@@ -57,19 +61,10 @@ def get_dataset(config, mode):
     shuffle = config["data_loader"]["shuffle"]
     num_workers = config["data_loader"]["num_workers"]
 
-    augmentations = dataset_config["augmentations"]
-
-    print(f"Loading {mode} dataset: {dataset_name}")
-
-    # 获取数据集的 class_num
-    class_num = dataset_config["class_num"]
+    print(f"Loading {mode} dataset: {dataset_name}, data augmentations has been loaded")
 
     # 初始化数据集
-    dataset = dataset_class(
-        dataset_config,
-        augmentations,
-        class_num=class_num
-    )
+    dataset = dataset_class(dataset_config)
 
     print(f"{dataset.__len__()}")
 

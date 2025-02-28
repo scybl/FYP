@@ -1,16 +1,22 @@
 .idea
 **/__pycache__
 
-saved_images/
-params/
-paper/
-isic2018/
-DRIVE/
-ACDC/
-Kvasir-SEG/
-sessile-main-Kvasir-SEG/
-
 output.txt
 .DS_Store
 
 
+saved_images/
+params/
+paper/
+isic2018/
+ACDC/
+Kvasir-SEG/
+CVC-ClinicDB/
+Synapse/
+sessile-main-Kvasir-SEG/
+DRIVE/
+ACDC/
+Kvasir-SEG/
+sessile-main-Kvasir-SEG/
+synapseCache/
+暂存/

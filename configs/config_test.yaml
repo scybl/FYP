@@ -1,13 +1,11 @@
 device: "cuda"  # cpu/ cuda
 model:
-  name: "unet0"
+  name: "unet"
   save_path: "params/"  # weight saving path
-save_image_path: "saved_images"  # save the predicted pic
 
-# 测试配置
-test_setting:
-  seed: 1234
-  dataset_name: "isic2018"
+# 保存训练结果
+save_pic: False
+save_image_path: "saved_images"  # save the predicted pic
 
 # 数据加载器配置
 data_loader:
@@ -15,11 +13,19 @@ data_loader:
   shuffle: true
   num_workers: 16
 
+# 测试配置
+setting:
+  dataset_name: "isic2018"
+  seed: 1234
+
+
 # 数据集公共配置
 datasets:
   isic2018:
     size: 256
     class_num: 1
+    test: True # 是否有测试集
+    val: True # 是否有验证集
     dataset_path: "LoadData"
     img_prefix: "ISIC_"
     seg_prefix: "ISIC_"
@@ -30,6 +36,55 @@ datasets:
     augmentations: {
       "geometric_transforms": [
         { "type": "Resize", "params": { "size": [256, 256] } }
+      ],
+      "color_transforms": [
+      ]
+    }
+  kvasir:
+    size: 256
+    class_num: 1
+    test: False # 是否有测试集
+    val: False # 是否有验证集
+    dataset_path: "LoadData"
+    img: "Kvasir-SEG/images"
+    mask: "Kvasir-SEG/masks"
+    augmentations: {
+      "geometric_transforms": [
+        { "type": "RandomHorizontalFlip", "params": { "p": 0.5 } },
+        { "type": "RandomRotation", "params": { "degree": 15 } },
+        { "type": "Resize", "params": { "size": [ 256, 256 ] } }
+      ],
+      "color_transforms": [
+      ]
+    }
+  clinicdb:
+    size: 256
+    class_num: 1
+    test: False # 是否有测试集
+    val: False # 是否有验证集
+    dataset_path: "LoadData"
+    img: "CVC-ClinicDB/Original"
+    mask: "CVC-ClinicDB/Ground Truth"
+    augmentations: {
+      "geometric_transforms": [
+        { "type": "RandomHorizontalFlip", "params": { "p": 0.5 } },
+        { "type": "RandomRotation", "params": { "degree": 15 } },
+        { "type": "Resize", "params": { "size": [ 256, 256 ] } }
+      ],
+      "color_transforms": [
+      ]
+    }
+  synapse:
+    size: 512
+    class_num: 8
+    test: False # 是否有测试集
+    val: False # 是否有验证集
+    dataset_path: "LoadData"
+    img: "Synapse/all/images"
+    mask: "Synapse/all/masks_rgb"
+    augmentations: {
+      "geometric_transforms": [
+        { "type": "Resize", "params": { "size": [ 512, 512 ] } }
       ],
       "color_transforms": [
       ]

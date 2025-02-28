@@ -1,15 +1,8 @@
-import torch
-
-from model_defination.AAA_Unet.unetbase import UNetBase
+from model_defination.AAA_Unet.unet import UNetBase
 from model_defination.AAA_BNet.BNet import BNet
 
-
 import torch
-import torch.nn as nn
-from fvcore.nn import FlopCountAnalysis, parameter_count_table
-
-# 确保正确导入你的模型类
-# from your_model_file import BNet, UNetBase
+from fvcore.nn import FlopCountAnalysis
 
 model_name = "UNet"
 
@@ -20,7 +13,6 @@ if model_name == "BNet":
 elif model_name == "UNet":
     model = UNetBase()
     model.load_state_dict(torch.load("params/unet0_1.pth", map_location=torch.device('cpu')))
-
 
 # 计算参数数量
 num_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
