@@ -342,6 +342,7 @@ class BNet(nn.Module):
         super(BNet, self).__init__()
         self.supervisor = deep_supervisor
 
+        # TODO： original part
         # self.cc1 = CCBlock(in_channel, 64) # 转64通道
 
         # self.down1 = DownSample(64)
@@ -352,6 +353,8 @@ class BNet(nn.Module):
 
         # self.d3 = DownSample(256)
         # self.cc4 = CCBlock(256, 512)  # 512*32*32
+
+        self.cc1 = CCBlock(in_channel, 3) # 无论是多少先转3通道，用来调用预训练
 
         # 从这里开始加载预训练模型
         self.encoder = Encoder(encoder_mode=encoder_mode, pretrain=pre_train)
