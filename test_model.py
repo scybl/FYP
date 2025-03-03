@@ -1,13 +1,12 @@
 import random
 import numpy as np
-from torch import nn
 from LoadData.data import get_dataset
 from LoadData.utils import load_config
+from LossFunction.LossChoose import LossFunctionHub
 from model_defination.model_loader import load_model
 import os
 import csv
 import torch
-
 
 def set_seed(seed):
     """设置随机种子以确保结果一致性"""
@@ -21,10 +20,9 @@ def set_seed(seed):
         torch.backends.cudnn.benchmark = False  # 关闭优化以确保一致性
 
 
-class SegmentationEvaluator:
+class Tester:
     def __init__(self, config_path):
         # 加载配置文件
-        self.net = None
         self.config = load_config(config_path)
         set_seed(self.config["setting"]['seed'])
         self.device = torch.device(self.config['device'] if torch.cuda.is_available() else "cpu")
@@ -35,7 +33,10 @@ class SegmentationEvaluator:
         dataset_name = self.config['setting']['dataset_name']
         class_num = self.config["datasets"][dataset_name]['class_num']
 
-        self.loss_fn = DiceCE(class_num)
+        # self.loss_hub = LossFunctionHub(loss_name="dice_ce", include_background=True, to_onehot_y=False, softmax=True) # 多分类
+        loss_hub = LossFunctionHub(loss_name='bce')
+
+        self.loss_fn = loss_hub.get_loss_function()
 
     def load_model(self, model_path):
         """加载模型权重"""
@@ -71,7 +72,7 @@ class SegmentationEvaluator:
 
         best_model = None
         best_dice = -1
-        print(f"Found model files: {model_files}")
+        print(f"Found model files: {len(model_files)}")
 
         for model_file in model_files:
             model_path = os.path.join(self.model_path, model_file)
@@ -123,17 +124,18 @@ class SegmentationEvaluator:
 
             results.append({
                 "model_file": model_file,
-                "avg_loss": avg_loss, # BSC损失
+                "avg_loss": avg_loss,  # BSC损失
                 "avg_dice": avg_dice,
                 "avg_iou": avg_iou,
                 "avg_pixel_acc": avg_pixel_acc
             })
 
             if avg_dice > best_dice:
-                # 是使用dice作为evaluate 
+                # 使用dice作为评估指标
                 best_dice = avg_dice
                 best_model = model_file
 
+        # 保存评估结果到CSV文件
         csv_path = os.path.join(self.config['model']['save_path'], "evaluation_results.csv")
         with open(csv_path, mode="w", newline="") as csv_file:
             writer = csv.DictWriter(csv_file,
@@ -151,7 +153,10 @@ class SegmentationEvaluator:
 
 
 if __name__ == "__main__":
-    CONFIG_NAME = "config_test.yaml"
-    CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
-    evaluator = SegmentationEvaluator(CONFIG_PATH)
-    evaluator.evaluate()
+    Config_list = [
+        "config_test_bnet_clinicdb.yaml"
+    ]
+    for CONFIG_NAME in Config_list:
+        CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
+        tester = Tester(CONFIG_PATH)
+        tester.evaluate()
