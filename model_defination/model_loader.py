@@ -50,7 +50,7 @@ def get_model_hub(in_channel,class_num):
         # TODO：模型我想添加
         # TODO：duck-net https://github.com/RazvanDu/DUCK-Net
         # TODO: nn-unet https://github.com/MIC-DKFZ/nnUNet
-        "bnet": lambda: BNet( in_channel=in_channel, num_classes=class_num),
+        "bnet": lambda: BNet( in_channel=in_channel, num_classes=class_num,encoder_mode='res50',pre_train=True),
         "unet": lambda: UNetBase(in_channel=in_channel,class_num=class_num),
         "unetpp": lambda: UnetPP(class_num),
         "duck": lambda: DuckNet(class_num),
