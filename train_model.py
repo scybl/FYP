@@ -1,5 +1,6 @@
 import os
 import torch
+from torch import no_grad
 from torchvision.utils import save_image
 
 from LoadData.data import get_dataset
@@ -14,11 +15,18 @@ class Trainer:
         self.config = load_config(config_path)
         self.device = torch.device(self.config['device'] if torch.cuda.is_available() else "cpu")
         self.class_num = self.config["datasets"][self.config["setting"]["dataset_name"]]["class_num"]
-        self.data_loader = get_dataset(self.config, 'train')
+
+
+        self.train_loader = get_dataset(self.config, 'train')
+
+
         self.net = load_model(self.config, 'train').to(self.device)
 
-        loss_hub = LossFunctionHub(loss_name="dice_ce", include_background=True, to_onehot_y=False, softmax=True) # 多分类
-        # loss_hub = LossFunctionHub(loss_name='bce')
+        if self.class_num == 1:
+            loss_hub = LossFunctionHub(loss_name="dice_ce", include_background=False, to_onehot_y=False, softmax=False,sigmoid=True) # 单分类
+        else:
+            loss_hub = LossFunctionHub(loss_name="dice_ce", include_background=True, to_onehot_y=False, softmax=True, sigmoid=False) # 多分类
+
 
         self.loss_fn = loss_hub.get_loss_function()
 
@@ -40,10 +48,39 @@ class Trainer:
         with open(self.loss_log_path, "w") as f:
             f.write("epoch,step,train_loss\n")
 
+    # def val(self):
+    #     self.net.eval()
+    #     with torch.no_grad():
+    #         for i, (image, segment_image) in enumerate(self.data_loader): # self.val_loader
+    #             image, segment_image = image.to(self.device), segment_image.to(self.device)
+    #             out_image = self.net(image)
+    #
+    #             test_loss = self.loss_fn(out_image, segment_image)
+    #             total += test_loss
+    #             ##############################################################################################
+    #             # 保存图像，用于可视化
+    #             _image = image[0]
+    #             _segment_image = segment_image[0]
+    #             _out_image = out_image[0]
+    #
+    #             _segment_image = _segment_image.repeat(3, 1, 1)  # 重复 3 次通道，大小变为 [3, 256, 256]
+    #             _out_image = _out_image.repeat(3, 1, 1)  # 重复 3 次通道，大小变为 [3, 256, 256]
+    #
+    #             img = torch.stack([_image, _segment_image, _out_image], dim=0)
+    #             save_image(img, os.path.join(self.config['save_image_path'],
+    #                                          f"{self.config['model']['name']}_{self.dataset_name}_{i}.png"))
+    #
+    #         return total/batch_size
+
+
+
     def train(self):
         epochs = 1
+        best_dice = 0
+
         while epochs <= self.config["setting"]['epochs']:
-            for i, (image, segment_image) in enumerate(self.data_loader):
+
+            for i, (image, segment_image) in enumerate(self.train_loader):
                 image, segment_image = image.to(self.device), segment_image.to(self.device)
                 out_image = self.net(image)
                 # print(f'image的大小为: f{image.size()}')
@@ -78,6 +115,13 @@ class Trainer:
                 assert current_lr == self.scheduler.get_lr(), f"不相等,检查问题current_lr:{current_lr}, scheduler_lr:{self.scheduler.get_lr()}"
                 print(f"Epoch {epochs} --- Step {i} --- Loss: {train_loss.item():.6f} --- LR: {current_lr:.6f}")
 
+
+            # # call self.val
+            # if best IS BETTER：
+            # reroll the model to the best
+            # else save the model and update best
+
+
             # 每个epoch保存一个模型
             torch.save(self.net.state_dict(), f"{self.save_model_path}_{self.dataset_name}_{epochs}.pth")
 
@@ -89,14 +133,18 @@ class Trainer:
 if __name__ == "__main__":
     model_config_list = [
         # 调试完成,没有什么问题
-        "config_train_unet_isic2018.yaml",
-        "config_train_bnet_isic2018.yaml",
 
-        "config_train_unet_kvasir.yaml",
+        "config_train_bnet34_isic2018.yaml",
+        "config_train_bnet_isic2018.yaml",
+        "config_train_unet_isic2018.yaml",
+
+        "config_train_bnet34_kvasir.yaml",
         "config_train_bnet_kvasir.yaml",
+        "config_train_unet_kvasir.yaml",
+
 
         "config_train_unet_clinicdb.yaml",
-        "config_train_bnet_clinicdb.yaml",
+        # "config_train_bnet_clinicdb.yaml",
 
         # "config_train_unet_synapse.yaml",
         # "config_train_bnet_synapse.yaml",

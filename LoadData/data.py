@@ -38,11 +38,11 @@ def get_dataset(config, mode):
     :param mode: 数据模式，"train" 或 "test"，决定加载训练或测试数据。
     :return: 数据加载器 (DataLoader) 对象。
     """
-    if mode not in ["train", "test"]:
-        raise ValueError(f"Unsupported mode '{mode}'. Use 'train' or 'test'.")
+    if mode not in ["train", "test", "val"]:
+        raise ValueError(f"Unsupported mode '{mode}'. Use 'train' or 'test'. or val")
 
     # 选择不同模式下的 dataset_name
-    dataset_name = config["setting"]["dataset_name"] if mode == "train" else config["setting"]["dataset_name"]
+    dataset_name = config["setting"]["dataset_name"]
 
     # 如果数据集是 ISIC2018，加载特定数据集
     if dataset_name.lower() == "isic2018":
