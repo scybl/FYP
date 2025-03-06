@@ -64,7 +64,7 @@ def get_dataset(config, mode):
     print(f"Loading {mode} dataset: {dataset_name}, data augmentations has been loaded")
 
     # 初始化数据集
-    dataset = dataset_class(dataset_config)
+    dataset = dataset_class(dataset_config, mode)
 
     print(f"{dataset.__len__()}")
 

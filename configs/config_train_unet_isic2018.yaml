@@ -37,8 +37,10 @@ datasets:
     seg_prefix: "ISIC_"
     img_suffix: ".jpg"
     seg_suffix: "_segmentation.png"
-    img: "isic2018/train/img"
-    mask: "isic2018/train/mask"
+    train_img: "isic2018/train/img"
+    train_mask: "isic2018/train/mask"
+    val_img: "isic2018/train/img"
+    val_mask: "isic2018/train/mask"
     augmentations: {
       "geometric_transforms": [
         { "type": "Resize", "params": { "size": [224, 224] } }

@@ -11,10 +11,17 @@ from LoadData.utils import build_transforms
 
 
 class ISIC2018_DataSet(Dataset):
-    def __init__(self, config):
+    def __init__(self, config, mode):
         self.config = config
-        self.mask_name = os.listdir(os.path.join(self.config["dataset_path"], self.config["mask"]))
         self.class_num = config["class_num"]
+
+        if mode == "train":
+            self.mask_name = os.listdir(os.path.join(self.config["dataset_path"], self.config["train_mask"]))
+        elif mode =="val":
+            self.mask_name = os.listdir(os.path.join(self.config["dataset_path"], self.config["val_mask"]))
+        elif mode == 'test':
+            self.mask_name = os.listdir(os.path.join(self.config["dataset_path"], self.config["test_mask"]))
+
 
         # **使用 SynchronizedTransform 进行同步数据增强**
         self.transforms = build_transforms(config['augmentations'])
