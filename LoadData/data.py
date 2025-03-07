@@ -30,7 +30,7 @@ class LabelProcessor:
         return label
 
 
-def get_dataset(config, mode):
+def get_dataset(config,dataset_name, mode):
     """
     通用数据加载器函数，用于获取训练或测试数据加载器。
 
@@ -41,10 +41,7 @@ def get_dataset(config, mode):
     if mode not in ["train", "test", "val"]:
         raise ValueError(f"Unsupported mode '{mode}'. Use 'train' or 'test'. or val")
 
-    # 选择不同模式下的 dataset_name
-    dataset_name = config["setting"]["dataset_name"]
-
-    # 如果数据集是 ISIC2018，加载特定数据集
+    # 加载特定数据集
     if dataset_name.lower() == "isic2018":
         dataset_class = ISIC2018_DataSet
     elif dataset_name.lower() == 'kvasir':

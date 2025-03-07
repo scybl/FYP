@@ -14,14 +14,20 @@ class ISIC2018_DataSet(Dataset):
     def __init__(self, config, mode):
         self.config = config
         self.class_num = config["class_num"]
+        self.dataset_path = self.config["dataset_path"]
 
         if mode == "train":
-            self.mask_name = os.listdir(os.path.join(self.config["dataset_path"], self.config["train_mask"]))
+            self.img_path = os.path.join(self.dataset_path, self.config["train_img"])
+            self.mask_path = os.path.join(self.dataset_path, self.config["train_mask"])
         elif mode =="val":
-            self.mask_name = os.listdir(os.path.join(self.config["dataset_path"], self.config["val_mask"]))
+            self.img_path = os.path.join(self.dataset_path, self.config["val_img"])
+            self.mask_path = os.path.join(self.dataset_path, self.config["val_mask"])
         elif mode == 'test':
-            self.mask_name = os.listdir(os.path.join(self.config["dataset_path"], self.config["test_mask"]))
+            self.img_path =os.path.join(self.dataset_path, self.config["test_img"])
+            self.mask_path = os.path.join(self.dataset_path, self.config["test_mask"])
 
+        self.img_list = os.listdir(self.img_path)
+        self.mask_list = os.listdir(self.mask_path)
 
         # **使用 SynchronizedTransform 进行同步数据增强**
         self.transforms = build_transforms(config['augmentations'])
@@ -31,21 +37,22 @@ class ISIC2018_DataSet(Dataset):
         self.transform_label = None
 
     def __len__(self):
-        return len(self.mask_name)
+        return len(self.mask_list)
 
     def __getitem__(self, index):
         # 获取 mask 文件名及路径
-        segment_name = self.mask_name[index]
-        segment_path = os.path.join(self.config["dataset_path"], self.config["mask"], segment_name)
+        mask_file_name = self.mask_list[index]
+
+        mask_file = os.path.join(self.mask_path, mask_file_name)
 
         # 生成对应的 image 文件名及路径
-        image_name = segment_name.replace(self.config["seg_prefix"], self.config["img_prefix"]).replace(
+        image_name = mask_file_name.replace(self.config["seg_prefix"], self.config["img_prefix"]).replace(
             self.config["seg_suffix"], self.config["img_suffix"])
-        image_path = os.path.join(self.config["dataset_path"], self.config["img"], image_name)
+        image_path = os.path.join(self.img_path, image_name)
 
         # **加载图像 (RGB)**
         img_image = Image.open(image_path).convert("RGB")  # 确保 image 为 3 通道
-        segment_image = Image.open(segment_path).convert("L")  # **转换为灰度模式，确保单通道**
+        segment_image = Image.open(mask_file).convert("L")  # **转换为灰度模式，确保单通道**
 
         # **同步几何变换**
         img_image, segment_image = self.transforms(img_image, segment_image)

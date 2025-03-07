@@ -68,7 +68,7 @@ def get_model_hub(in_channel,class_num):
     return model_hub
 
 # 定义一个模型加载函数
-def load_model(_config, mode):
+def load_model(_config, mode, model_name,dataset_name):
     """
     根据配置文件中的模型名称加载模型结构，并返回模型实例。
 
@@ -76,10 +76,10 @@ def load_model(_config, mode):
     :param mode: 加载模式，'train' 或 'test'，用于区分加载训练或测试权重。
     :return: 初始化的模型实例。
     """
-    model_name = _config.get("model")['name']
+    model_name = model_name
     model_path = _config.get("model")['save_path']
 
-    dataset_name = _config['setting']['dataset_name']
+    dataset_name = dataset_name
 
     in_channel = _config["datasets"][dataset_name]["in_channel"]
     class_num = _config["datasets"][dataset_name]['class_num']
