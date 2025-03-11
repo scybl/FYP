@@ -3,7 +3,6 @@
 # TODO: 修复test class
 # TODO: 使用fvcore来计算模型的参数和FLOPs
 
-
 # 进度
 # TODO：更改优化器从，Adam换成AdamW(已完成)
 # TODO: 查看h5文件,在终端输入vitables,然后打开文件(已解决)
@@ -35,3 +34,4 @@
     # clinicDB (已完成)
     # kvasir (已完成)
 # TODO: Bnet模型出现问题，需修复 （已完成）
+# TODO: 修复5个模型的加载unet， bnet， bnet34， duck， unetpp （已完成）

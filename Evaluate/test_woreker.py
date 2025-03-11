@@ -2,6 +2,9 @@ import time
 import torch
 from torch.utils.data import DataLoader, Dataset
 
+"""
+this method just for fine the best worker num for the current task
+"""
 
 class DummyDataset(Dataset):
     def __init__(self, size=10000):

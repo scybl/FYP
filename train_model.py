@@ -5,10 +5,12 @@ from torchvision.utils import save_image
 
 from LoadData.data import get_dataset
 from LoadData.utils import load_config
-from LossFunction.LearningRate import PolyWarmupScheduler
-from LossFunction.LossChoose import LossFunctionHub
+from Evaluate.LearningRate import PolyWarmupScheduler
+from Evaluate.LossChoose import LossFunctionHub
 from model_defination.model_loader import load_model
 from torch.optim import AdamW
+
+
 
 class Trainer:
     def __init__(self, config_path, model_name, dataset_name):
@@ -17,7 +19,9 @@ class Trainer:
         self.class_num = self.config["datasets"][dataset_name]["class_num"]
         self.model_name = model_name
 
-        self.train_loader = get_dataset(self.config, dataset_name, 'train')
+        self.dataset_name = dataset_name
+        self.train_dataset = get_dataset(self.config, self.dataset_name, 'train')
+        self.val_dataset = get_dataset(self.config, self.dataset_name, 'val') # 这里写入验证数据集
 
         self.net = load_model(self.config, 'train', model_name, dataset_name).to(self.device)
 
@@ -38,7 +42,6 @@ class Trainer:
             power=0.9,
             eta_min=self.config["setting"]['min_lr']
         )
-        self.dataset_name = dataset_name
         self.save_model_path = os.path.join(self.config['model']["save_path"], model_name)
         self.loss_log_path = os.path.join(self.config['model']['save_path'], f"train_loss_log_{model_name}_{self.dataset_name}.csv")
         self._init_log_file()
@@ -47,29 +50,29 @@ class Trainer:
         with open(self.loss_log_path, "w") as f:
             f.write("epoch,step,train_loss\n")
 
-    # def val(self):
-    #     self.net.eval()
-    #     with torch.no_grad():
-    #         for i, (image, segment_image) in enumerate(self.data_loader): # self.val_loader
-    #             image, segment_image = image.to(self.device), segment_image.to(self.device)
-    #             out_image = self.net(image)
-    #
-    #             test_loss = self.loss_fn(out_image, segment_image)
-    #             total += test_loss
-    #             ##############################################################################################
-    #             # 保存图像，用于可视化
-    #             _image = image[0]
-    #             _segment_image = segment_image[0]
-    #             _out_image = out_image[0]
-    #
-    #             _segment_image = _segment_image.repeat(3, 1, 1)  # 重复 3 次通道，大小变为 [3, 256, 256]
-    #             _out_image = _out_image.repeat(3, 1, 1)  # 重复 3 次通道，大小变为 [3, 256, 256]
-    #
-    #             img = torch.stack([_image, _segment_image, _out_image], dim=0)
-    #             save_image(img, os.path.join(self.config['save_image_path'],
-    #                                          f"{self.config['model']['name']}_{self.dataset_name}_{i}.png"))
-    #
-    #         return total/batch_size
+    def val(self) -> float:
+        self.net.eval()
+        total_loss = 0.0
+        with torch.no_grad():
+            for i, (image, segment_image) in enumerate(self.val_dataset): # self.val_loader
+                image, segment_image = image.to(self.device), segment_image.to(self.device)
+                out_image = self.net(image)
+
+                total_loss += self.loss_fn(out_image, segment_image)
+                ##############################################################################################
+                # 保存图像，用于可视化
+                _image = image[0]
+                _segment_image = segment_image[0]
+                _out_image = out_image[0]
+
+                _segment_image = _segment_image.repeat(3, 1, 1)  # 重复 3 次通道，大小变为 [3, 256, 256]
+                _out_image = _out_image.repeat(3, 1, 1)  # 重复 3 次通道，大小变为 [3, 256, 256]
+
+                img = torch.stack([_image, _segment_image, _out_image], dim=0)
+                save_image(img, os.path.join(self.config['save_image_path'],
+                                             f"{self.config['model']['name']}_{self.dataset_name}_{i}.png"))
+
+
 
 
 
@@ -78,10 +81,11 @@ class Trainer:
         best_dice = 0
 
         while epochs <= self.config["setting"]['epochs']:
-
-            for i, (image, segment_image) in enumerate(self.train_loader):
+            for i, (image, segment_image) in enumerate(self.train_dataset):
                 image, segment_image = image.to(self.device), segment_image.to(self.device)
                 out_image = self.net(image)
+
+
                 # print(f'image的大小为: f{image.size()}')
                 # print(f'mask的大小为: f{segment_image.size()}')
                 # print(f'out_img的大小为: f{out_image.size()}')
@@ -114,7 +118,8 @@ class Trainer:
                 assert current_lr == self.scheduler.get_lr(), f"不相等,检查问题current_lr:{current_lr}, scheduler_lr:{self.scheduler.get_lr()}"
                 print(f"Epoch {epochs} --- Step {i} --- Loss: {train_loss.item():.6f} --- LR: {current_lr:.6f}")
 
-
+            self.val()
+            # val
             # # call self.val
             # if best IS BETTER：
             # reroll the model to the best
@@ -130,13 +135,14 @@ class Trainer:
 
 # 运行训练
 if __name__ == "__main__":
-    model_list = [
+    model_hub = [
+        "duck",
+        "unetpp",
         "bnet",
         'unet',
         "bnet34",
     ]
-
-    dataset_list = [
+    dataset_hub = [
         'kvasir',
         'clinicdb',
         'isic2018',
@@ -144,8 +150,8 @@ if __name__ == "__main__":
     ]
 
     train_config_path = 'configs/config_train.yaml'
-    for model_name in model_list:
-        for dataset_name in dataset_list:
+    for model_name in model_hub:
+        for dataset_name in dataset_hub:
             print(dataset_name)
             print(model_name)
 

@@ -1,11 +1,5 @@
 # 定义一个模型加载函数
-import os
 import torch
-from glob import glob
-
-from monai.data.utils import is_no_channel
-
-from LoadData.utils import load_config
 from model_defination.AAA_BNet.BNet_Res34 import BNet_Res34
 from model_defination.AAA_BNet.Bnet import BNet
 from model_defination.AAA_DuckNet.DuckNet import  DuckNet
@@ -14,14 +8,7 @@ from model_defination.AAA_unetpp.unetpp import UnetPP
 
 import os
 from glob import glob
-
-def bnet():
-    def __init__(self):
-        super(BNet, self).__init__()
-        pass
-    def forward(self, x):
-        pass
-
+import logging
 
 def get_best_or_latest_model_path(model_path, model_name, dataset_name):
     f"""
@@ -62,13 +49,14 @@ def get_model_hub(in_channel,class_num):
         "bnet_r34": lambda: BNet_Res34(in_channel=in_channel, num_classes=class_num, encoder_mode='res34', pre_train=True),
         "bnet": lambda : BNet(in_channel=in_channel, num_classes=class_num),
         "unet": lambda: UNetBase(in_channel=in_channel,class_num=class_num),
-        "unetpp": lambda: UnetPP(class_num),
-        "duck": lambda: DuckNet(class_num),
+
+        "unetpp": lambda: UnetPP(in_channel,num_classes=class_num, deep_supervision=False),
+        "duck": lambda: DuckNet(in_channel=in_channel, num_classes=class_num),
     }
     return model_hub
 
 # 定义一个模型加载函数
-def load_model(_config, mode, model_name,dataset_name):
+def load_model(_config, mode, model_name, dataset_name):
     """
     根据配置文件中的模型名称加载模型结构，并返回模型实例。
 

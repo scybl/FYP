@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+"""
+读取一个csv文件并绘制这个图的线性图
+"""
 
 def visualize_training_results(csv_file):
     """

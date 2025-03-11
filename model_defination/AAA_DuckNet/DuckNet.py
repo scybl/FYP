@@ -196,9 +196,9 @@ class DUCK(nn.Module):
 
 @register_model()
 class DuckNet(nn.Module):
-    def __init__(self, num_class, n_channel=3, base_channel=17, act_type='relu'):
+    def __init__(self, in_channel, num_classes, base_channel=17, act_type='relu'):
         super().__init__()
-        self.down_stage1 = DownsampleBlock(n_channel, base_channel * 2, act_type, fuse_channels=base_channel)
+        self.down_stage1 = DownsampleBlock(in_channel, base_channel * 2, act_type, fuse_channels=base_channel)
         self.down_stage2 = DownsampleBlock(base_channel * 2, base_channel * 4, act_type)
         self.down_stage3 = DownsampleBlock(base_channel * 4, base_channel * 8, act_type)
         self.down_stage4 = DownsampleBlock(base_channel * 8, base_channel * 16, act_type)
@@ -215,7 +215,7 @@ class DuckNet(nn.Module):
         self.up_stage3 = UpsampleBlock(base_channel * 4, base_channel * 2, act_type)
         self.up_stage2 = UpsampleBlock(base_channel * 2, base_channel, act_type)
         self.up_stage1 = UpsampleBlock(base_channel, base_channel, act_type)
-        self.seg_head = nn.Conv2d(base_channel, num_class, kernel_size=1, stride=1, padding=0, bias=False)
+        self.seg_head = nn.Conv2d(base_channel, num_classes, kernel_size=1, stride=1, padding=0, bias=False)
 
     def forward(self, x):
         x1, x1_skip, x = self.down_stage1(x)

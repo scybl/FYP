@@ -1,8 +1,5 @@
-import torch
-from model_defination.AAA_BNet.BNet_Res34 import BNet_Res34
 from model_defination.AAA_Unet.unet import UNetBase
 import torch
-import torch.nn as nn
 from fvcore.nn import FlopCountAnalysis, parameter_count_table
 
 
@@ -10,6 +7,7 @@ from fvcore.nn import FlopCountAnalysis, parameter_count_table
 参数量主要影响-训练时间，因为它决定了模型在反向传播中需要优化的权重数量。
 计算量主要影响-推理时间，因为它决定了模型在正向传播中需要执行的计算操作数量。
 """
+
 # 定义模型
 model = UNetBase(1)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

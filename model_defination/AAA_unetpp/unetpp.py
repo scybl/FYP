@@ -34,13 +34,13 @@ class ConvBlock(nn.Module):
 
 
 class UnetPP(nn.Module):
-    def __init__(self, num_classes=3, deep_supervision=False):
+    def __init__(self, in_channel, num_classes, deep_supervision=False):
         super(UnetPP, self).__init__()
         self.num_classes = num_classes
         self.deep_supervision = deep_supervision
         self.filters = [64, 128, 256, 512, 1024]
 
-        self.stage_0 = ConvBlock(3, 64, pre_Batch_Norm=False)
+        self.stage_0 = ConvBlock(in_channel, 64, pre_Batch_Norm=False)
         self.stage_1 = ConvBlock(64, 128, pre_Batch_Norm=False)
         self.stage_2 = ConvBlock(128, 256, pre_Batch_Norm=False)
         self.stage_3 = ConvBlock(256, 512, pre_Batch_Norm=False)
