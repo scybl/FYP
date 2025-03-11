@@ -39,7 +39,6 @@ datasets:
     train_img: "isic2018/train/img"
     train_mask: "isic2018/train/mask"
 
-    val: True
     val_img: "isic2018/val/img"
     val_mask: "isic2018/val/mask"
 
@@ -58,8 +57,17 @@ datasets:
     class_num: 1
     in_channel: 3
     dataset_path: "LoadData"
-    img: "Kvasir-SEG/images"
-    mask: "Kvasir-SEG/masks"
+
+    train_img: "Kvasir-SEG/train/img"
+    train_mask: "Kvasir-SEG/train/mask"
+
+    val_img: "Kvasir-SEG/val/img"
+    val_mask: "Kvasir-SEG/val/mask"
+
+    test_img: "Kvasir-SEG/test/img"
+    test_mask: "Kvasir-SEG/test/mask"
+
+
     augmentations: {
       "geometric_transforms": [
         { "type": "Resize", "params": { "size": [ 224, 224 ] } }
@@ -72,8 +80,16 @@ datasets:
     class_num: 1
     in_channel: 3
     dataset_path: "LoadData"
-    img: "CVC-ClinicDB/Original"
-    mask: "CVC-ClinicDB/Ground Truth"
+
+    train_img: "CVC-ClinicDB/train/img"
+    train_mask: "CVC-ClinicDB/train/mask"
+
+    val_img: "CVC-ClinicDB/val/img"
+    val_mask: "CVC-ClinicDB/val/mask"
+
+    test_img: "CVC-ClinicDB/test/img"
+    test_mask: "CVC-ClinicDB/test/mask"
+
     augmentations: {
       "geometric_transforms": [
         { "type": "Resize", "params": { "size": [ 224, 224 ] } }

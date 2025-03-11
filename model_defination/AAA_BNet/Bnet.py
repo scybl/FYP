@@ -26,9 +26,6 @@ class BNet(nn.Module):
         self.d3 = DownSample(256)
         self.cc4 = CCBlock(256, 512)  # 512*32*32
 
-        self.cc1 = CCBlock(in_channel, 3)
-
-
         self.dag1 = DAG(64)
         self.dag2 = DAG(128)
         self.dag3 = DAG(256)
@@ -52,8 +49,6 @@ class BNet(nn.Module):
         R2 = self.cc2(self.down1(R1))
         R3 = self.cc3(self.down2(R2))
         R4 = self.cc4(self.d3(R3))
-
-        R1, R2, R3, R4 = self.encoder(input)
 
         out1 = self.pham1(R4)
 

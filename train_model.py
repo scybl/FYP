@@ -19,7 +19,6 @@ class Trainer:
 
         self.train_loader = get_dataset(self.config, dataset_name, 'train')
 
-
         self.net = load_model(self.config, 'train', model_name, dataset_name).to(self.device)
 
         if self.class_num == 1:
@@ -132,15 +131,15 @@ class Trainer:
 # 运行训练
 if __name__ == "__main__":
     model_list = [
+        "bnet",
         'unet',
         "bnet34",
-        "bnet",
     ]
 
     dataset_list = [
-        'isic2018',
+        'kvasir',
         'clinicdb',
-        'kvasir'
+        'isic2018',
         'sunapse'
     ]
 
