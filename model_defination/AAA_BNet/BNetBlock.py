@@ -8,7 +8,7 @@ from torch.nn import functional as F
 
 
 class DAG(nn.Module):
-    def __init__(self, channels, dilation_rate=2, dropout_rate=0.3):
+    def __init__(self, channels, dilation_rate=2, dropout_rate=0.0):
         super(DAG, self).__init__()
 
         # 第一个膨胀卷积分支
@@ -60,27 +60,31 @@ class DAG(nn.Module):
 
 
 class ECAB(nn.Module):
-    def __init__(self, channels, deep_supervisor=True, reduction_ratio=4, dropout_rate=0.3):
+    def __init__(self, channels, deep_supervisor=True, reduction_ratio=4, dropout_rate=0.0):
         super(ECAB, self).__init__()
         reduced_channels = channels // reduction_ratio
         self.supervisor = deep_supervisor
-        # AMP 路径（全局平均池化）
+
+        # AMP 路径（全局平均池化） 使用线性层
         self.AMP = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),  # 全局平均池化 (C, H, W) -> (C, 1, 1)
-            nn.Conv2d(channels, reduced_channels, 1),  # 1x1 卷积: (C, 1, 1) -> (C/r, 1, 1)
+            nn.AdaptiveAvgPool2d(1),  # 全局平均池化: (B, C, H, W) -> (B, C, 1, 1)
+            nn.Flatten(),  # 展平: (B, C, 1, 1) -> (B, C)
+            nn.Linear(channels, reduced_channels),  # 线性层: 降维 (B, C) -> (B, C/r)
             nn.ReLU(inplace=True),  # ReLU 激活函数
             nn.Dropout(p=dropout_rate),  # Dropout 层
-            nn.Conv2d(reduced_channels, channels, 1)  # 1x1 卷积: (C/r, 1, 1) -> (C, 1, 1)
+            nn.Linear(reduced_channels, channels),  # 线性层: 升维 (B, C/r) -> (B, C)
+            nn.Unflatten(1, (channels, 1, 1))  # 恢复形状: (B, C) -> (B, C, 1, 1)
         )
 
-        # APP 路径（全局最大池化）
+        # APP 路径（全局最大池化） 使用线性层
         self.APP = nn.Sequential(
-            nn.AdaptiveMaxPool2d(1),  # 全局最大池化 (C, H, W) -> (C, 1, 1)
-            nn.Conv2d(channels, reduced_channels, 1),
-            # TODO： 看看这里是否使用线性层来计算，适用线性层才需要dropout 1x1 卷积: (C, 1, 1) -> (C/r, 1, 1)  (B, C) -> LINEAR(C -> CT) -> (B, CT) # LINEAR
+            nn.AdaptiveMaxPool2d(1),  # 全局最大池化: (B, C, H, W) -> (B, C, 1, 1)
+            nn.Flatten(),  # 展平: (B, C, 1, 1) -> (B, C)
+            nn.Linear(channels, reduced_channels),  # 线性层: 降维 (B, C) -> (B, C/r)
             nn.ReLU(inplace=True),  # ReLU 激活函数
             nn.Dropout(p=dropout_rate),  # Dropout 层
-            nn.Conv2d(reduced_channels, channels, 1)  # TODO： 这里也是 1x1 卷积: (C/r, 1, 1) -> (C, 1, 1) # Linear
+            nn.Linear(reduced_channels, channels),  # 线性层: 升维 (B, C/r) -> (B, C)
+            nn.Unflatten(1, (channels, 1, 1))  # 恢复形状: (B, C) -> (B, C, 1, 1)
         )
 
         # 空间 H * W 卷积路径
@@ -149,7 +153,7 @@ class ESAB(nn.Module):
 
 
 class PHAM(nn.Module):
-    def __init__(self, channels, dropout=0.3):
+    def __init__(self, channels, dropout=0.0):
         super(PHAM, self).__init__()
 
         # ECAB 和 ESAB 分支
@@ -261,17 +265,17 @@ class CCBlock(nn.Module):
     连续卷积模块
     """
 
-    def __init__(self, in_channel, out_channel):
+    def __init__(self, in_channel, out_channel, drop_rate=0.0):
         super(CCBlock, self).__init__()
         self.layer = nn.Sequential(
             nn.Conv2d(in_channel, out_channel, 3, 1, 1, padding_mode='reflect', bias=False),
             nn.BatchNorm2d(out_channel),
-            nn.Dropout2d(0.3),
+            nn.Dropout2d(drop_rate),
             nn.LeakyReLU(),
             # dilation mean the
             nn.Conv2d(out_channel, out_channel, 3, 1, 1, padding_mode='reflect', bias=False, dilation=1),
             nn.BatchNorm2d(out_channel),
-            nn.Dropout2d(0.3),
+            nn.Dropout2d(drop_rate),
             nn.LeakyReLU()
         )
 

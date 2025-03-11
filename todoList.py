@@ -4,6 +4,7 @@
 # TODO: 使用fvcore来计算模型的参数和FLOPs
 
 # 进度
+# TODO: 将BNet的block AMP和APP的卷积层改为线性层
 # TODO：更改优化器从，Adam换成AdamW(已完成)
 # TODO: 查看h5文件,在终端输入vitables,然后打开文件(已解决)
 # TODO：更改学习率的部分，这里有问题,(已解决)

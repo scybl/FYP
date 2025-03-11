@@ -1,6 +1,5 @@
 import os
 import torch
-from torch import no_grad
 from torchvision.utils import save_image
 
 from LoadData.data import get_dataset
@@ -45,7 +44,7 @@ class Trainer:
         )
         self.save_model_path = os.path.join(self.config['model']["save_path"], model_name)
         self.loss_log_path = os.path.join(self.config['model']['save_path'],
-                                          f"train_loss_log_{model_name}_{self.dataset_name}.csv")
+                                          f"log_{model_name}_{self.dataset_name}.csv")
         self._init_log_file()
 
     def _init_log_file(self):
@@ -87,75 +86,75 @@ class Trainer:
         print(f"Validation Loss: {avg_loss:.6f}")
         return avg_loss
 
-def train(self):
-    epochs = 1
-    best_val_loss = float('inf')
+    def train(self):
+        epochs = 1
+        best_val_loss = float('inf')
 
-    while epochs <= self.config["setting"]['epochs']:
-        self.net.train()  # 确保模型处于训练模式
-        for i, (image, segment_image) in enumerate(self.train_dataset):
-            image, segment_image = image.to(self.device), segment_image.to(self.device)
-            out_image = self.net(image)
-            # print(f'image的大小为: f{image.size()}')
-            # print(f'mask的大小为: f{segment_image.size()}')
-            # print(f'out_img的大小为: f{out_image.size()}')
+        while epochs <= self.config["setting"]['epochs']:
+            self.net.train()  # 确保模型处于训练模式
+            for i, (image, segment_image) in enumerate(self.train_dataset):
+                image, segment_image = image.to(self.device), segment_image.to(self.device)
+                out_image = self.net(image)
+                # print(f'image的大小为: f{image.size()}')
+                # print(f'mask的大小为: f{segment_image.size()}')
+                # print(f'out_img的大小为: f{out_image.size()}')
 
-            train_loss = self.loss_fn(out_image, segment_image)
+                train_loss = self.loss_fn(out_image, segment_image)
 
-            self.opt.zero_grad()
-            train_loss.backward()
-            self.opt.step()
+                self.opt.zero_grad()
+                train_loss.backward()
+                self.opt.step()
 
-            # 保存训练日志
-            with open(self.loss_log_path, "a") as f:
-                f.write(f"{epochs},{i},{train_loss.item():.6f}\n")
+                # 保存训练日志
+                with open(self.loss_log_path, "a") as f:
+                    f.write(f"{epochs},{i},{train_loss.item():.6f}\n")
 
-            ################################################################################
-            # 保存图像，用于可视化
-            _image = image[0]
-            _segment_image = segment_image[0]
-            _out_image = out_image[0]
+                ################################################################################
+                # 保存图像，用于可视化
+                _image = image[0]
+                _segment_image = segment_image[0]
+                _out_image = out_image[0]
 
-            _segment_image = _segment_image.repeat(3, 1, 1)
-            _out_image = _out_image.repeat(3, 1, 1)
+                _segment_image = _segment_image.repeat(3, 1, 1)
+                _out_image = _out_image.repeat(3, 1, 1)
 
-            img = torch.stack([_image, _segment_image, _out_image], dim=0)
-            save_path = os.path.join(self.config['save_image_path'],
-                                     f"{self.model_name}_{self.dataset_name}_{i}.png")
-            save_image(img, save_path)
-            ################################################################################
+                img = torch.stack([_image, _segment_image, _out_image], dim=0)
+                save_path = os.path.join(self.config['save_image_path'],
+                                         f"{self.model_name}_{self.dataset_name}_{i}.png")
+                save_image(img, save_path)
+                ################################################################################
 
-            current_lr = self.opt.param_groups[0]['lr']
-            # 注意：scheduler.get_lr() 可能返回列表，这里需要根据实际情况调整断言
-            print(f"Epoch {epochs} --- Step {i} --- Loss: {train_loss.item():.6f} --- LR: {current_lr:.6f}")
+                current_lr = self.opt.param_groups[0]['lr']
+                # 注意：scheduler.get_lr() 可能返回列表，这里需要根据实际情况调整断言
+                print(f"Epoch {epochs} --- Step {i} --- Loss: {train_loss.item():.6f} --- LR: {current_lr:.6f}")
 
-        # 每个 epoch 后调用验证函数
-        val_loss = self.val()
+            # 每个 epoch 后调用验证函数
+            val_loss = self.val()
 
-        # 保存最优模型逻辑（示例：当验证 loss 更低时保存）
-        if val_loss < best_val_loss:
-            best_val_loss = val_loss
-            torch.save(self.net.state_dict(), f"{self.save_model_path}_{self.dataset_name}_{epochs}.pth")
-            print(f"Epoch {epochs}: 找到更优模型，保存模型。")
+            # 保存最优模型逻辑（示例：当验证 loss 更低时保存）
+            if val_loss < best_val_loss:
+                best_val_loss = val_loss
+                torch.save(self.net.state_dict(), f"{self.save_model_path}_{self.dataset_name}_{epochs}.pth")
+                print(f"Epoch {epochs}: 找到更优模型，保存模型。")
 
-        # 更新学习率
-        self.scheduler.step()
-        epochs += 1
+            # 更新学习率
+            self.scheduler.step()
+            epochs += 1
 
 # 运行训练
 if __name__ == "__main__":
     model_hub = [
-        "duck",
-        "unetpp",
+        # "duck",
+        # "unetpp",
         "bnet",
-        'unet',
-        "bnet34",
+        # 'unet',
+        # "bnet34",
     ]
     dataset_hub = [
         'kvasir',
-        'clinicdb',
-        'isic2018',
-        'sunapse'
+        # 'clinicdb',
+        # 'isic2018',
+        # 'sunapse'
     ]
 
     train_config_path = 'configs/config_train.yaml'

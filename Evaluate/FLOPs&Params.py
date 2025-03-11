@@ -2,30 +2,40 @@ from model_defination.AAA_Unet.unet import UNetBase
 import torch
 from fvcore.nn import FlopCountAnalysis, parameter_count_table
 
-"""
-参数量主要影响-训练时间，因为它决定了模型在反向传播中需要优化的权重数量。
-计算量主要影响-推理时间，因为它决定了模型在正向传播中需要执行的计算操作数量。
-"""
 
-# 定义模型
-model = UNetBase(1)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
+class UNetAnalyzer:
+    """
+    用于加载 UNet 模型，并计算其 FLOPs 和参数数量。
 
-# 输入张量大小 (Batch size, Channels, Height, Width)
-input_size = (3, 256, 256)
+    参数:
+    in_channels (int): 模型输入的通道数。
+    device (torch.device): 设备，默认为cuda（如果可用）或cpu。
+    """
+    def __init__(self, in_channels: int, device: torch.device = None):
+        if device is None:
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# 创建一个与模型输入相匹配的随机 tensor
-input_tensor = torch.randn(1, 3, 224, 224)
 
-# 使用 FlopCountAnalysis 计算 FLOPs
-flops = FlopCountAnalysis(model, input_tensor)
-print("Total FLOPs:", flops.total())
+        self.device = device
 
-# 输出详细的 FLOPs 统计表
-# print("\nFLOPs breakdown:")
-# print(flop_count_table(model, input_tensor))
+        # 初始化模型并将模型移动到指定设备
+        self.model = UNetBase(in_channels)
+        self.model.to(self.device)
 
-# 使用 parameter_count_table 输出模型参数数量统计
-print("\nParameters:")
-print(parameter_count_table(model))
+    def analyze(self, input_tensor_size: tuple) -> None:
+        """
+        根据输入张量尺寸计算模型的 FLOPs 和参数数量，并打印结果。
+
+        参数:
+        input_tensor_size (tuple): 输入张量尺寸，格式为 (Channels, Height, Width)
+        """
+        # 构造一个与模型输入匹配的随机张量 (Batch size 默认为 1)
+        input_tensor = torch.randn(1, *input_tensor_size).to(self.device)
+
+        # 使用 FlopCountAnalysis 计算 FLOPs
+        flops = FlopCountAnalysis(self.model, input_tensor)
+        print("Total FLOPs:", flops.total())
+
+        # 输出模型参数数量统计
+        print("\nParameters:")
+        print(parameter_count_table(self.model))
