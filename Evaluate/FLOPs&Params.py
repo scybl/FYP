@@ -2,7 +2,6 @@ from model_defination.AAA_Unet.unet import UNetBase
 import torch
 from fvcore.nn import FlopCountAnalysis, parameter_count_table
 
-
 """
 参数量主要影响-训练时间，因为它决定了模型在反向传播中需要优化的权重数量。
 计算量主要影响-推理时间，因为它决定了模型在正向传播中需要执行的计算操作数量。
@@ -15,7 +14,6 @@ model.to(device)
 
 # 输入张量大小 (Batch size, Channels, Height, Width)
 input_size = (3, 256, 256)
-
 
 # 创建一个与模型输入相匹配的随机 tensor
 input_tensor = torch.randn(1, 3, 224, 224)

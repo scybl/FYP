@@ -7,12 +7,12 @@
 # TODO：更改优化器从，Adam换成AdamW(已完成)
 # TODO: 查看h5文件,在终端输入vitables,然后打开文件(已解决)
 # TODO：更改学习率的部分，这里有问题,(已解决)
-    # 制作一个line table来说明这个，最后调用poly
+# 制作一个line table来说明这个，最后调用poly
 # TODO：更改动态学习率（已完成）再换（完成）
-    # Poly Strategy, H2Former，
-    # warmup, 训练 K 轮之后，lr再降低，
-    # Spark: https://github.com/keyu-tian/SparK/blob/main/pretrain/utils/lr_control.py, warm-up 锁定，K轮次之后再降低lr
-    # 关于我为什么放弃warm up，因为warm up主要用于大模型前期训练的稳定，主要出现于模型注意力模块训练前期模型的性能稳定
+# Poly Strategy, H2Former，
+# warmup, 训练 K 轮之后，lr再降低，
+# Spark: https://github.com/keyu-tian/SparK/blob/main/pretrain/utils/lr_control.py, warm-up 锁定，K轮次之后再降低lr
+# 关于我为什么放弃warm up，因为warm up主要用于大模型前期训练的稳定，主要出现于模型注意力模块训练前期模型的性能稳定
 # TODO：学习transunet的enocder部分, 作一下encoder的部分，调用一个预训练模型（已完成）
 # 已经成功加载res34预训练模型
 # TODO: kvasir和clinicDB数据集训练出来结果全黑,需要完整训练测试（已解决）
@@ -30,8 +30,8 @@
 # TODO: 添加一个划分验证集，测试集，训练集（已完成）
 # 已经成功分割train,test,val = 7:2:1
 # TODO: 为数据集添加mode加载数据的方法 (已完成)
-    # isic2018 (已完成)
-    # clinicDB (已完成)
-    # kvasir (已完成)
+# isic2018 (已完成)
+# clinicDB (已完成)
+# kvasir (已完成)
 # TODO: Bnet模型出现问题，需修复 （已完成）
 # TODO: 修复5个模型的加载unet， bnet， bnet34， duck， unetpp （已完成）

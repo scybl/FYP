@@ -27,14 +27,15 @@ class PolyWarmupScheduler:
             print(lr)
         else:
             # **Poly Decay阶段**
-            poly_factor = (1 - (self.current_epoch - self.warmup_epochs) / (self.total_epochs - self.warmup_epochs)) ** self.power
+            poly_factor = (1 - (self.current_epoch - self.warmup_epochs) / (
+                        self.total_epochs - self.warmup_epochs)) ** self.power
             lr = (self.initial_lr - self.eta_min) * poly_factor + self.eta_min
 
         # **更新优化器中的学习率**
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = lr
 
-        self.current_epoch += 1 # 更新当前 epoch 计数
+        self.current_epoch += 1  # 更新当前 epoch 计数
 
     def get_lr(self):
         """返回当前的学习率"""

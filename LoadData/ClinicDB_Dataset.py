@@ -21,11 +21,11 @@ class ClinicDB_Dataset(Dataset):
         if mode == "train":
             self.img_path = os.path.join(self.dataset_path, self.config["train_img"])
             self.mask_path = os.path.join(self.dataset_path, self.config["train_mask"])
-        elif mode =="val":
+        elif mode == "val":
             self.img_path = os.path.join(self.dataset_path, self.config["val_img"])
             self.mask_path = os.path.join(self.dataset_path, self.config["val_mask"])
         elif mode == 'test':
-            self.img_path =os.path.join(self.dataset_path, self.config["test_img"])
+            self.img_path = os.path.join(self.dataset_path, self.config["test_img"])
             self.mask_path = os.path.join(self.dataset_path, self.config["test_mask"])
 
         self.img_list = os.listdir(self.img_path)
@@ -38,7 +38,6 @@ class ClinicDB_Dataset(Dataset):
         self.to_tensor = transforms.ToTensor()
         self.transform_label = None
 
-
     def __len__(self):
         return len(self.mask_list)
 
@@ -50,13 +49,13 @@ class ClinicDB_Dataset(Dataset):
         mask_path = os.path.join(self.mask_path, mask_file_name)
 
         # 读取TIF图像
-        image = tiff.imread(img_path) # ndarray [288,384,3] ,是一个三通道图片
-        mask = tiff.imread(mask_path) # ndarray [288,384],是一个单通道图片
+        image = tiff.imread(img_path)  # ndarray [288,384,3] ,是一个三通道图片
+        mask = tiff.imread(mask_path)  # ndarray [288,384],是一个单通道图片
 
         image = Image.fromarray(image)
         mask = Image.fromarray(mask)
 
-        image,mask = self.transforms(image,mask)
+        image, mask = self.transforms(image, mask)
         image = self.to_tensor(image)
         mask = self.to_tensor(mask)
 

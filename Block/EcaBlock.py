@@ -22,6 +22,6 @@ class EcaBlock(nn.Module):
 
     def forward(self, x):
         v = self.avg_pool(x)
-        v = self.conv(v.squeeze(-1).transpose(-1, -2)).transpose(-1, -2).unsqueeze(-1) # 将全链接层改为卷积
+        v = self.conv(v.squeeze(-1).transpose(-1, -2)).transpose(-1, -2).unsqueeze(-1)  # 将全链接层改为卷积
         v = self.sigmoid(v)
         return x * v

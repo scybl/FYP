@@ -10,6 +10,7 @@ class LabelProcessor:
     """
     标签预处理器：将标签转换为指定的通道数，确保标签格式符合网络需求
     """
+
     def __init__(self, class_num=1):
         self.class_num = class_num
 
@@ -30,7 +31,7 @@ class LabelProcessor:
         return label
 
 
-def get_dataset(config,dataset_name, mode):
+def get_dataset(config, dataset_name, mode):
     """
     通用数据加载器函数，用于获取训练或测试数据加载器。
 

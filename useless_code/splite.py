@@ -1,5 +1,7 @@
 import os
 import shutil
+
+
 def get_file_names_without_extension(path):
     file_names = []
     # 遍历路径下的所有项
@@ -12,6 +14,7 @@ def get_file_names_without_extension(path):
             file_names.append(name)
     return file_names
 
+
 def split_list_by_ratio(input_list):
     n = len(input_list)
     # 总比例
@@ -19,11 +22,11 @@ def split_list_by_ratio(input_list):
     # 计算前三个部分的长度，最后一个部分用剩余的元素
     len1 = int(n * 7 / total_ratio)
     len2 = int(n * 2 / total_ratio)
-    len3 = n - len1 - len2 # 确保总数一致
+    len3 = n - len1 - len2  # 确保总数一致
 
     part1 = input_list[:len1]
-    part2 = input_list[len1:len1+len2]
-    part3 = input_list[len1+len2:]
+    part2 = input_list[len1:len1 + len2]
+    part3 = input_list[len1 + len2:]
 
     return part1, part2, part3
 
@@ -47,7 +50,6 @@ def move_files_by_name(file_list, source_path, target_path):
                 print(f"移动文件: {filename} 到 {target_path}")
 
 
-
 path = "LoadData/Kvasir-SEG/images"
 result = get_file_names_without_extension(path)
 print("文件名列表：", result)
@@ -60,18 +62,14 @@ print("第一部分：", len(p1))
 print("第二部分：", len(p2))
 print("第三部分：", len(p3))
 
-
-
-move_files_by_name(p2,'LoadData/Kvasir-SEG/images',
+move_files_by_name(p2, 'LoadData/Kvasir-SEG/images',
                    'LoadData/Kvasir-SEG/val/img')
 
-move_files_by_name(p2,'LoadData/Kvasir-SEG/masks',
+move_files_by_name(p2, 'LoadData/Kvasir-SEG/masks',
                    'LoadData/Kvasir-SEG/val/mask')
 
-move_files_by_name(p3,'LoadData/Kvasir-SEG/images',
+move_files_by_name(p3, 'LoadData/Kvasir-SEG/images',
                    'LoadData/Kvasir-SEG/test/img')
 
-move_files_by_name(p3,'LoadData/Kvasir-SEG/masks',
+move_files_by_name(p3, 'LoadData/Kvasir-SEG/masks',
                    'LoadData/Kvasir-SEG/test/mask')
-
-

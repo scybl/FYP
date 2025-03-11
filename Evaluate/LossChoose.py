@@ -1,7 +1,6 @@
 import torch.nn as nn
 from monai.losses import DiceCELoss, DiceLoss, FocalLoss, TverskyLoss
 
-
 """
 loss_hub = LossFunctionHub(loss_name="dice_ce", to_onehot_y=True, softmax=True)
 loss_fn = loss_hub.get_loss_function()
@@ -28,13 +27,13 @@ class LossFunctionHub:
 
         if self.loss_name == "dice_ce":
             return DiceCELoss(
-                include_background=self.kwargs.get("include_background", True), # 是否计算背景
-                to_onehot_y=self.kwargs.get("to_onehot_y", False),              # 是否将标签转换为one-hot格式
-                sigmoid=self.kwargs.get("sigmoid", False),                      # 多类别-softmax，二分类 sigmoid
+                include_background=self.kwargs.get("include_background", True),  # 是否计算背景
+                to_onehot_y=self.kwargs.get("to_onehot_y", False),  # 是否将标签转换为one-hot格式
+                sigmoid=self.kwargs.get("sigmoid", False),  # 多类别-softmax，二分类 sigmoid
                 softmax=self.kwargs.get("softmax", False),
-                reduction=self.kwargs.get("reduction", "mean"),                 # 计算多个batch的平均损失
-                lambda_dice=self.kwargs.get("lambda_dice", 0.7),                # dice loss 权重
-                lambda_ce=self.kwargs.get("lambda_ce", 0.3),                    # cross entropy 权重
+                reduction=self.kwargs.get("reduction", "mean"),  # 计算多个batch的平均损失
+                lambda_dice=self.kwargs.get("lambda_dice", 0.7),  # dice loss 权重
+                lambda_ce=self.kwargs.get("lambda_ce", 0.3),  # cross entropy 权重
             )
 
         elif self.loss_name == "dice":

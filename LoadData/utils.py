@@ -60,7 +60,6 @@ def build_transforms(augmentations):
     return SynchronizedTransform(transform_list)
 
 
-
 # 加载配置文件的函数
 def load_config(config_path):
     with open(config_path, 'r') as file:

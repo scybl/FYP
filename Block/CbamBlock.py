@@ -38,7 +38,7 @@ class ChannelAttention(nn.Module):
 
     def forward(self, x):
         avg_out = self.avg_pool(x)
-        avg_out = self.fc1(avg_out) # this is the full-connection layer
+        avg_out = self.fc1(avg_out)  # this is the full-connection layer
         avg_out = self.relu(avg_out)
         avg_out = self.fc2(avg_out)
 

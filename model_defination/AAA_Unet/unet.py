@@ -9,7 +9,6 @@ class UNetBase(nn.Module):
     this is the base U-net model, It is copy from the paper nearly total.
     the changed point is change the max pool to the 2-size conv core
     """
-
     def __init__(self, in_channel, class_num=1):
         super(UNetBase, self).__init__()
         # ------开始下采样

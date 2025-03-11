@@ -6,6 +6,7 @@ from torch.nn import functional as F
 这个是所有的B-Net架构的内容，我将所有封装的模块都写在这里，方便后续更改
 """
 
+
 class DAG(nn.Module):
     def __init__(self, channels, dilation_rate=2, dropout_rate=0.3):
         super(DAG, self).__init__()
@@ -75,7 +76,8 @@ class ECAB(nn.Module):
         # APP 路径（全局最大池化）
         self.APP = nn.Sequential(
             nn.AdaptiveMaxPool2d(1),  # 全局最大池化 (C, H, W) -> (C, 1, 1)
-            nn.Conv2d(channels, reduced_channels, 1),  # TODO： 看看这里是否使用线性层来计算，适用线性层才需要dropout 1x1 卷积: (C, 1, 1) -> (C/r, 1, 1)  (B, C) -> LINEAR(C -> CT) -> (B, CT) # LINEAR
+            nn.Conv2d(channels, reduced_channels, 1),
+            # TODO： 看看这里是否使用线性层来计算，适用线性层才需要dropout 1x1 卷积: (C, 1, 1) -> (C/r, 1, 1)  (B, C) -> LINEAR(C -> CT) -> (B, CT) # LINEAR
             nn.ReLU(inplace=True),  # ReLU 激活函数
             nn.Dropout(p=dropout_rate),  # Dropout 层
             nn.Conv2d(reduced_channels, channels, 1)  # TODO： 这里也是 1x1 卷积: (C/r, 1, 1) -> (C, 1, 1) # Linear
@@ -229,7 +231,7 @@ class UCB(nn.Module):
         super(UCB, self).__init__()
 
         # 上采样（2倍，双线性插值）
-        self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True) # ConvTranspose
+        self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)  # ConvTranspose
 
         # 深度可分离卷积 (Depthwise Separable Convolution, DWC)
         self.dw_conv = nn.Conv2d(in_channels, in_channels, kernel_size=3, stride=1, padding=1, groups=in_channels)
@@ -237,7 +239,7 @@ class UCB(nn.Module):
 
         # Batch Normalization 和 ReLU
         self.bn = nn.BatchNorm2d(out_channels)
-        self.relu = nn.ReLU(inplace=True) # GeLU, LeakRelU, ReLU6()
+        self.relu = nn.ReLU(inplace=True)  # GeLU, LeakRelU, ReLU6()
 
     def forward(self, x):
         # 执行上采样

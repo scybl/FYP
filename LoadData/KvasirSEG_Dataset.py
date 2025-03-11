@@ -16,11 +16,11 @@ class KvasirSEG_Dataset(data.Dataset):
         if mode == "train":
             self.img_path = os.path.join(self.dataset_path, self.config["train_img"])
             self.mask_path = os.path.join(self.dataset_path, self.config["train_mask"])
-        elif mode =="val":
+        elif mode == "val":
             self.img_path = os.path.join(self.dataset_path, self.config["val_img"])
             self.mask_path = os.path.join(self.dataset_path, self.config["val_mask"])
         elif mode == 'test':
-            self.img_path =os.path.join(self.dataset_path, self.config["test_img"])
+            self.img_path = os.path.join(self.dataset_path, self.config["test_img"])
             self.mask_path = os.path.join(self.dataset_path, self.config["test_mask"])
 
         self.img_list = os.listdir(self.img_path)
@@ -61,4 +61,3 @@ class KvasirSEG_Dataset(data.Dataset):
         img_image = self.to_tensor(img_image)  # 变为 (3, H, W)
         mask_image = self.to_tensor(mask_image)  # **变为 (1, H, W)，避免通道不匹配**
         return img_image, mask_image
-

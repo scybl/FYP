@@ -9,6 +9,7 @@ from LoadData.utils import build_transforms
 读取isic2018，返回img/mask的tensor类
 """
 
+
 class ISIC2018_DataSet(Dataset):
     def __init__(self, config, mode):
         self.config = config
@@ -18,11 +19,11 @@ class ISIC2018_DataSet(Dataset):
         if mode == "train":
             self.img_path = os.path.join(self.dataset_path, self.config["train_img"])
             self.mask_path = os.path.join(self.dataset_path, self.config["train_mask"])
-        elif mode =="val":
+        elif mode == "val":
             self.img_path = os.path.join(self.dataset_path, self.config["val_img"])
             self.mask_path = os.path.join(self.dataset_path, self.config["val_mask"])
         elif mode == 'test':
-            self.img_path =os.path.join(self.dataset_path, self.config["test_img"])
+            self.img_path = os.path.join(self.dataset_path, self.config["test_img"])
             self.mask_path = os.path.join(self.dataset_path, self.config["test_mask"])
 
         self.img_list = os.listdir(self.img_path)

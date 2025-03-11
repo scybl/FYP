@@ -3,7 +3,6 @@ from torch import nn
 from model_defination.AAA_BNet.BNetBlock import CCBlock, DAG, PHAM, UCB
 from model_defination.AAA_BNet.ResNet import resnet34, resnet50, resnet101, resnet152
 
-
 """
 这个是所有的B-Net架构的内容，我将所有封装的模块都写在这里，方便后续更改
 """
@@ -13,17 +12,20 @@ class Input_project(nn.Module):
     '''
     这个class用来处理输入，转换为三通道
     '''
-    def __init__(self,in_channel):
+
+    def __init__(self, in_channel):
         super(Input_project, self).__init__()
         self.preprocess = nn.Sequential(
             CCBlock(in_channel, 3)
         )
         pass
+
     def forward(self, x):
         return self.preprocess(x)
 
+
 class Encoder(nn.Module):
-    def __init__(self, encoder_mode ='original', pretrain = True):
+    def __init__(self, encoder_mode='original', pretrain=True):
         super(Encoder, self).__init__()
         if encoder_mode == 'res34':
             self.backbone = resnet34(pretrained=pretrain)
@@ -39,11 +41,12 @@ class Encoder(nn.Module):
             print('无效编码器')
             self.backbone = resnet50(pretrained=pretrain)
 
-    def forward(self,x):
+    def forward(self, x):
         return self.backbone(x)
 
+
 class Decoder(nn.Module):
-    def __init__(self,supervisor):
+    def __init__(self, supervisor):
         super(Decoder, self).__init__()
         self.supervisor = supervisor
         self.dag1 = DAG(64)
@@ -60,6 +63,7 @@ class Decoder(nn.Module):
         self.ucb3 = UCB(128, 64)
 
         self.pham4 = PHAM(64)
+
     def forward(self, R1, R2, R3, R4):
         out1 = self.pham1(R4)
 
@@ -79,14 +83,16 @@ class Decoder(nn.Module):
         out4 = self.pham4(Dag3 + U3)
 
         if self.supervisor:
-            return [out1,out2,out3,out4]
+            return [out1, out2, out3, out4]
         else:
             return out4
+
 
 class Output_project(nn.Module):
     """
     这个class用来处理模型生成输出的通道投影
     """
+
     def __init__(self, out_channel, supervisor):
         super(Output_project, self).__init__()
         self.supervisor = supervisor
@@ -104,20 +110,21 @@ class Output_project(nn.Module):
     def forward(self, x):
         return self.out_project(x)
 
+
 class BNet_Res34(nn.Module):
     """
     according to the channel num to do
     """
-    def __init__(self, in_channel, num_classes, encoder_mode, pre_train = True, deep_supervisor = False):
+
+    def __init__(self, in_channel, num_classes, encoder_mode, pre_train=True, deep_supervisor=False):
         super(BNet_Res34, self).__init__()
         self.input_project = Input_project(in_channel)
 
         # 从这里开始加载预训练模型
         self.encoder = Encoder(encoder_mode=encoder_mode, pretrain=pre_train)
-        self.decoder = Decoder(deep_supervisor) # 返回一个图像，如果是
+        self.decoder = Decoder(deep_supervisor)  # 返回一个图像，如果是
 
-        self.out_project = Output_project(num_classes,deep_supervisor)
-
+        self.out_project = Output_project(num_classes, deep_supervisor)
 
     def forward(self, _x):
         input = self.input_project(_x)
@@ -130,8 +137,7 @@ class BNet_Res34(nn.Module):
         # print(R3.shape)
         # print(R4.shape)
 
-        out = self.decoder(R1,R2,R3,R4)
-        out= self.out_project(out)
+        out = self.decoder(R1, R2, R3, R4)
+        out = self.out_project(out)
 
         return out
-
