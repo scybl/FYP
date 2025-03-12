@@ -46,7 +46,7 @@ def get_model_hub(in_channel,class_num):
         # TODO：模型我想添加
         # TODO：duck-net https://github.com/RazvanDu/DUCK-Net
         # TODO: nn-unet https://github.com/MIC-DKFZ/nnUNet
-        "bnet_r34": lambda: BNet_Res34(in_channel=in_channel, num_classes=class_num, encoder_mode='res34', pre_train=True),
+        "bnet34": lambda: BNet_Res34(in_channel=in_channel, num_classes=class_num, encoder_mode='res34', pre_train=True),
         "bnet": lambda : BNet(in_channel=in_channel, num_classes=class_num),
         "unet": lambda: UNetBase(in_channel=in_channel,class_num=class_num),
 
@@ -55,16 +55,15 @@ def get_model_hub(in_channel,class_num):
     }
     return model_hub
 
-# 定义一个模型加载函数
-def load_model(_config, mode, model_name, dataset_name):
+
+def load_model(_config, _model_name, dataset_name):
     """
     根据配置文件中的模型名称加载模型结构，并返回模型实例。
 
     :param _config: 配置字典，包含模型名称、路径等信息。
-    :param mode: 加载模式，'train' 或 'test'，用于区分加载训练或测试权重。
     :return: 初始化的模型实例。
     """
-    model_name = model_name
+    _model_name = _model_name
     model_path = _config.get("model")['save_path']
 
     dataset_name = dataset_name
@@ -75,20 +74,19 @@ def load_model(_config, mode, model_name, dataset_name):
     model_hub = get_model_hub(in_channel=in_channel,class_num=class_num)
     device = _config["device"]
     # 初始化模型
-    if model_name not in model_hub:
-        raise ValueError(f"Unknown model name '{model_name}' in config file.")
+    if _model_name not in model_hub:
+        raise ValueError(f"Unknown model name '{_model_name}' in config file.")
 
-    model = model_hub[model_name]()
+    model = model_hub[_model_name]()
 
-    # 如果是训练模式，尝试加载权重
-    if mode == "train":
-        try:
-            weight_path = get_best_or_latest_model_path(model_path, model_name,dataset_name)
-            print(f"Loading weights from {weight_path}")
-            model.load_state_dict(torch.load(weight_path, map_location=device, weights_only=True))
-            print("Successfully loaded weights.")
-        except FileNotFoundError as e:
-            print(e)
-            print("No weights loaded.")
+
+    try:
+        weight_path = get_best_or_latest_model_path(model_path, _model_name, dataset_name)
+        print(f"Loading weights from {weight_path}")
+        model.load_state_dict(torch.load(weight_path, map_location=device, weights_only=True))
+        print("Successfully loaded weights.")
+    except FileNotFoundError as e:
+        print(e)
+        print("No weights loaded.")
 
     return model.to(device)

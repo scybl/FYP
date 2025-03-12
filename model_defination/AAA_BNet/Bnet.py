@@ -42,7 +42,10 @@ class BNet(nn.Module):
 
         self.pham4 = PHAM(64)
 
-        self.convFinal1 = nn.Conv2d(64, num_classes, 1)
+        self.convFinal1 = nn.Sequential(
+            nn.Conv2d(64, num_classes, kernel_size=1, stride=1),
+            nn.BatchNorm2d(num_classes)
+        )
 
     def forward(self, _x):
         R1 = self.cc1(_x)

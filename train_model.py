@@ -21,7 +21,7 @@ class Trainer:
         self.train_dataset = get_dataset(self.config, self.dataset_name, 'train')
         self.val_dataset = get_dataset(self.config, self.dataset_name, 'val')  # 这里写入验证数据集
 
-        self.net = load_model(self.config, 'train', model_name, dataset_name).to(self.device)
+        self.net = load_model(self.config, model_name, dataset_name).to(self.device)
 
         if self.class_num == 1:
             loss_hub = LossFunctionHub(loss_name="dice_ce", include_background=False, to_onehot_y=False, softmax=False,
@@ -48,8 +48,11 @@ class Trainer:
         self._init_log_file()
 
     def _init_log_file(self):
-        with open(self.loss_log_path, "w") as f:
-            f.write("epoch,step,train_loss\n")
+        file_exists = os.path.exists(self.loss_log_path)
+        mode = "a" if file_exists else "w"
+        with open(self.loss_log_path, mode) as f:
+            if not file_exists:
+                f.write("epoch,step,train_loss\n")
 
     def val(self) -> float:
         self.net.eval()  # 设置评估模式
@@ -78,7 +81,7 @@ class Trainer:
                 # 堆叠图像：原图、标签图、输出图
                 img = torch.stack([_image, _segment_image, _out_image], dim=0)
                 save_path = os.path.join(self.config['save_image_path'],
-                                         f"{self.config['model']['name']}_{self.dataset_name}_{i}.png")
+                                         f"{self.model_name}_{self.dataset_name}_{i}.png")
                 save_image(img, save_path)
                 ####################################################################################
 
@@ -90,6 +93,7 @@ class Trainer:
         epochs = 1
         best_val_loss = float('inf')
 
+        stop_epochs = 0
         while epochs <= self.config["setting"]['epochs']:
             self.net.train()  # 确保模型处于训练模式
             for i, (image, segment_image) in enumerate(self.train_dataset):
@@ -109,21 +113,6 @@ class Trainer:
                 with open(self.loss_log_path, "a") as f:
                     f.write(f"{epochs},{i},{train_loss.item():.6f}\n")
 
-                ################################################################################
-                # 保存图像，用于可视化
-                _image = image[0]
-                _segment_image = segment_image[0]
-                _out_image = out_image[0]
-
-                _segment_image = _segment_image.repeat(3, 1, 1)
-                _out_image = _out_image.repeat(3, 1, 1)
-
-                img = torch.stack([_image, _segment_image, _out_image], dim=0)
-                save_path = os.path.join(self.config['save_image_path'],
-                                         f"{self.model_name}_{self.dataset_name}_{i}.png")
-                save_image(img, save_path)
-                ################################################################################
-
                 current_lr = self.opt.param_groups[0]['lr']
                 # 注意：scheduler.get_lr() 可能返回列表，这里需要根据实际情况调整断言
                 print(f"Epoch {epochs} --- Step {i} --- Loss: {train_loss.item():.6f} --- LR: {current_lr:.6f}")
@@ -136,28 +125,33 @@ class Trainer:
                 best_val_loss = val_loss
                 torch.save(self.net.state_dict(), f"{self.save_model_path}_{self.dataset_name}_{epochs}.pth")
                 print(f"Epoch {epochs}: 找到更优模型，保存模型。")
+                stop_epochs = 0
+            else:
+                stop_epochs += 1
 
             # 更新学习率
             self.scheduler.step()
             epochs += 1
 
+            if stop_epochs > 30:
+                break
 # 运行训练
 if __name__ == "__main__":
     model_hub = [
         # "duck",
         # "unetpp",
         "bnet",
-        # 'unet',
-        # "bnet34",
+        'unet',
+        "bnet34",
     ]
     dataset_hub = [
         'kvasir',
-        # 'clinicdb',
-        # 'isic2018',
+        'clinicdb',
+        'isic2018',
         # 'sunapse'
     ]
 
-    train_config_path = 'configs/config_train.yaml'
+    train_config_path = 'configs/config.yaml'
     for model_name in model_hub:
         for dataset_name in dataset_hub:
             print(dataset_name)

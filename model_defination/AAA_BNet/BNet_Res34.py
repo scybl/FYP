@@ -103,8 +103,7 @@ class Output_project(nn.Module):
         self.out_project = nn.Sequential(
             nn.Upsample(scale_factor=4, mode='bilinear', align_corners=False),
             nn.Conv2d(64, out_channel, kernel_size=1, stride=1),
-            nn.BatchNorm2d(out_channel),
-            nn.ReLU(inplace=True)
+            nn.BatchNorm2d(out_channel)
         )
 
     def forward(self, x):

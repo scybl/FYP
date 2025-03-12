@@ -14,8 +14,8 @@ data_loader:
 
 # 训练配置
 setting:
-  epochs: 100
-
+  epochs: 300
+  seed: 42
   max_lr: 0.001
   power: 0.9
   min_lr: 0.00001
