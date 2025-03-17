@@ -66,7 +66,7 @@ class Tester:
                 ####################################################################################
 
         avg_loss = total_loss / num_batches if num_batches > 0 else float('inf')
-        print(f"Test Loss: {avg_loss:.6f}")
+        print(f"Test Loss: {1.0 - avg_loss:.6f}")
         return avg_loss
 
 if __name__ == "__main__":
@@ -90,3 +90,4 @@ if __name__ == "__main__":
         for dataset_name in dataset_hub:
             tester = Tester(test_config_path, _model_name=model_name, _dataset_name=dataset_name)
             tester.test()
+            print("---------------")

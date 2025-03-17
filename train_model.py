@@ -8,7 +8,7 @@ from Evaluate.LearningRate import PolyWarmupScheduler
 from Evaluate.LossChoose import LossFunctionHub
 from model_defination.model_loader import load_model
 from torch.optim import AdamW
-
+import time
 
 class Trainer:
     def __init__(self, config_path, model_name, dataset_name):
@@ -97,6 +97,7 @@ class Trainer:
         while epochs <= self.config["setting"]['epochs']:
             self.net.train()  # 确保模型处于训练模式
             for i, (image, segment_image) in enumerate(self.train_dataset):
+                self.opt.zero_grad()
                 image, segment_image = image.to(self.device), segment_image.to(self.device)
                 out_image = self.net(image)
                 # print(f'image的大小为: f{image.size()}')
@@ -105,7 +106,7 @@ class Trainer:
 
                 train_loss = self.loss_fn(out_image, segment_image)
 
-                self.opt.zero_grad()
+
                 train_loss.backward()
                 self.opt.step()
 
@@ -123,7 +124,7 @@ class Trainer:
             # 保存最优模型逻辑（示例：当验证 loss 更低时保存）
             if val_loss < best_val_loss:
                 best_val_loss = val_loss
-                torch.save(self.net.state_dict(), f"{self.save_model_path}_{self.dataset_name}_{epochs}.pth")
+                torch.save(self.net.state_dict(), f"{self.save_model_path}_{self.dataset_name}_best.pth")
                 print(f"Epoch {epochs}: 找到更优模型，保存模型。")
                 stop_epochs = 0
             else:
@@ -133,7 +134,7 @@ class Trainer:
             self.scheduler.step()
             epochs += 1
 
-            if stop_epochs > 30:
+            if stop_epochs > 100:
                 break
 # 运行训练
 if __name__ == "__main__":
@@ -152,6 +153,31 @@ if __name__ == "__main__":
     ]
 
     train_config_path = 'configs/config.yaml'
+    for model_name in model_hub:
+        for dataset_name in dataset_hub:
+            print(dataset_name)
+            print(model_name)
+
+            trainer = Trainer(train_config_path, model_name=model_name, dataset_name=dataset_name)
+            trainer.train()
+
+            # print("休息20分钟")
+            # time.sleep(1200) # 休息20分钟
+            # print("休息完成")
+
+    model_hub = [
+        # "duck",
+        # "unetpp",
+        # "bnet",
+        # 'unet',
+        "bnet34",
+    ]
+    dataset_hub = [
+        'kvasir',
+        'clinicdb',
+        'isic2018',
+        # 'sunapse'
+    ]
     for model_name in model_hub:
         for dataset_name in dataset_hub:
             print(dataset_name)
