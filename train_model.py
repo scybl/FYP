@@ -9,6 +9,9 @@ from Evaluate.LossChoose import LossFunctionHub
 from model_defination.model_loader import load_model
 from torch.optim import AdamW
 import time
+from monai.metrics import DiceMetric
+from monai.transforms import AsDiscrete
+
 
 class Trainer:
     def __init__(self, config_path, model_name, dataset_name):
@@ -56,16 +59,28 @@ class Trainer:
 
     def val(self) -> float:
         self.net.eval()  # 设置评估模式
-        total_loss = 0.0
+        dice_metric = DiceMetric(include_background=False, reduction="mean_batch")
         num_batches = 0
+        dice_scores = []
 
         with torch.no_grad():
             for i, (image, segment_image) in enumerate(self.val_dataset):  # 或者使用 self.val_loader
                 image, segment_image = image.to(self.device), segment_image.to(self.device)
                 out_image = self.net(image)
 
-                loss = self.loss_fn(out_image, segment_image)
-                total_loss += loss.item()  # 累加 loss 值
+                # 后处理输出和标签
+                post_pred = AsDiscrete(argmax=True, to_onehot=True, num_classes=2)
+                post_label = AsDiscrete(to_onehot=True, num_classes=2)
+
+                pred_onehot = post_pred(out_image)
+                label_onehot = post_label(segment_image)
+
+                # 计算 Dice 指标
+                dice_metric(y_pred=pred_onehot, y=label_onehot)
+                dice_score = dice_metric.aggregate().item()
+                dice_scores.append(dice_score)
+
+                dice_metric.reset()
                 num_batches += 1
 
                 ####################################################################################
@@ -85,9 +100,11 @@ class Trainer:
                 save_image(img, save_path)
                 ####################################################################################
 
-        avg_loss = total_loss / num_batches if num_batches > 0 else float('inf')
-        print(f"Validation Loss: {avg_loss:.6f}")
-        return avg_loss
+        # 计算平均 Dice
+        avg_dice = sum(dice_scores) / num_batches if num_batches > 0 else 0.0
+        print(f"Validation Dice: {avg_dice:.6f}")
+        return avg_dice
+
 
     def train(self):
         epochs = 1
