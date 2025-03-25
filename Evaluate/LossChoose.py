@@ -32,8 +32,8 @@ class LossFunctionHub:
                 sigmoid=self.kwargs.get("sigmoid", False),  # 多类别-softmax，二分类 sigmoid
                 softmax=self.kwargs.get("softmax", False),
                 reduction=self.kwargs.get("reduction", "mean"),  # 计算多个batch的平均损失
-                lambda_dice=self.kwargs.get("lambda_dice", 0.7),  # dice loss 权重
-                lambda_ce=self.kwargs.get("lambda_ce", 0.3),  # cross entropy 权重
+                lambda_dice=self.kwargs.get("lambda_dice", 0.5),  # dice loss 权重
+                lambda_ce=self.kwargs.get("lambda_ce", 0.5),  # cross entropy 权重
             )
 
         elif self.loss_name == "dice":

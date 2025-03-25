@@ -7,6 +7,9 @@ from LoadData.utils import load_config
 from Evaluate.LossChoose import LossFunctionHub
 from model_defination.model_loader import load_model
 
+# import warnings
+# warnings.warn("single channel prediction, `to_onehot_y=True` ignored.")
+
 class Tester:
     def __init__(self, config_path, _model_name, _dataset_name):
         # 加载配置
@@ -72,7 +75,7 @@ class Tester:
 if __name__ == "__main__":
     model_hub = [
         # "duck",
-        # "unetpp",
+        "unetpp",
         "bnet",
         'unet',
         "bnet34",
@@ -88,6 +91,6 @@ if __name__ == "__main__":
 
     for model_name in model_hub:
         for dataset_name in dataset_hub:
+            print("---------------")
             tester = Tester(test_config_path, _model_name=model_name, _dataset_name=dataset_name)
             tester.test()
-            print("---------------")

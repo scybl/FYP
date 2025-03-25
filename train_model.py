@@ -140,7 +140,7 @@ class Trainer:
 if __name__ == "__main__":
     model_hub = [
         # "duck",
-        # "unetpp",
+        "unetpp",
         "bnet",
         'unet',
         "bnet34",
