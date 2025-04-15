@@ -1,5 +1,5 @@
 from torch import nn
-from Block.ConvBlock import ConvBlock
+from Block.ConvBlock import ConvBlock2
 
 
 class ResidualBlock(nn.Module):
@@ -13,7 +13,7 @@ class ResidualBlock(nn.Module):
         super(ResidualBlock, self).__init__()
 
         # 定义卷积块
-        self.conv_block = ConvBlock(in_channels, out_channels, kernel_size, stride, padding, padding_mode, bias,
+        self.conv_block = ConvBlock2(in_channels, out_channels, kernel_size, stride, padding, padding_mode, bias,
                                     dropout_rate)
 
         # 如果输入通道数与输出通道数不匹配，通过 1x1 卷积进行调整

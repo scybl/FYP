@@ -1,6 +1,6 @@
 from torch import nn
 
-from Block.ConvBlock import ConvBlock
+from Block.ConvBlock import ConvBlock2
 from Block.Sample import DownSample, UpSample
 
 
@@ -13,65 +13,65 @@ class UNetBase(nn.Module):
         super(UNetBase, self).__init__()
         # ------开始下采样
         self.layer1 = nn.Sequential(
-            ConvBlock(in_channel, 64, 3, 1, 1, "reflect", False, 0.3),
-            ConvBlock(64, 64, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+            ConvBlock2(in_channel, 64, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock2(64, 64, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
                       bias=False, dropout_rate=0.3)
         )
         self.d1 = DownSample(64)
 
         self.layer2 = nn.Sequential(
-            ConvBlock(64, 128, 3, 1, 1, "reflect", False, 0.3),
-            ConvBlock(128, 128, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+            ConvBlock2(64, 128, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock2(128, 128, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
                       bias=False, dropout_rate=0.3)
         )
         self.d2 = DownSample(128)
 
         self.layer3 = nn.Sequential(
-            ConvBlock(128, 256, 3, 1, 1, "reflect", False, 0.3),
-            ConvBlock(256, 256, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+            ConvBlock2(128, 256, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock2(256, 256, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
                       bias=False, dropout_rate=0.3)
         )
         self.d3 = DownSample(256)
 
         self.layer4 = nn.Sequential(
-            ConvBlock(256, 512, 3, 1, 1, "reflect", False, 0.3),
-            ConvBlock(512, 512, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+            ConvBlock2(256, 512, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock2(512, 512, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
                       bias=False, dropout_rate=0.3)
         )
         self.d4 = DownSample(512)
 
         self.layer5 = nn.Sequential(
-            ConvBlock(512, 1024, 3, 1, 1, "reflect", False, 0.3),
-            ConvBlock(1024, 1024, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+            ConvBlock2(512, 1024, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock2(1024, 1024, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
                       bias=False, dropout_rate=0.3)
         )
 
         # -------开始上采样
         self.up1 = UpSample(1024)
         self.layer6 = nn.Sequential(
-            ConvBlock(1024, 512, 3, 1, 1, "reflect", False, 0.3),
-            ConvBlock(512, 512, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+            ConvBlock2(1024, 512, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock2(512, 512, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
                       bias=False, dropout_rate=0.3)
         )
 
         self.up2 = UpSample(512)
         self.layer7 = nn.Sequential(
-            ConvBlock(512, 256, 3, 1, 1, "reflect", False, 0.3),
-            ConvBlock(256, 256, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+            ConvBlock2(512, 256, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock2(256, 256, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
                       bias=False, dropout_rate=0.3)
         )
 
         self.up3 = UpSample(256)
         self.layer8 = nn.Sequential(
-            ConvBlock(256, 128, 3, 1, 1, "reflect", False, 0.3),
-            ConvBlock(128, 128, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+            ConvBlock2(256, 128, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock2(128, 128, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
                       bias=False, dropout_rate=0.3)
         )
 
         self.up4 = UpSample(128)
         self.layer9 = nn.Sequential(
-            ConvBlock(128, 64, 3, 1, 1, "reflect", False, 0.3),
-            ConvBlock(64, 64, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
+            ConvBlock2(128, 64, 3, 1, 1, "reflect", False, 0.3),
+            ConvBlock2(64, 64, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
                       bias=False, dropout_rate=0.3)
         )
 

@@ -1,30 +1,28 @@
-device: "cuda"  # cpu/ cuda
+# device: "cuda"  # cpu/ cuda
+device: "cuda:1"
 model:
   save_path: "params/"  # weight saving path
 
-# 保存训练结果
+# save path of evaluating result
 save_pic: False
 save_image_path: "saved_images"  # save the predicted pic
 
-# 数据加载器配置
+# data loader
 data_loader:
-  batch_size: 16
+  batch_size: 32
   shuffle: true
   num_workers: 16
 
-# 训练配置
+# training setting
 setting:
-  epochs: 300
+  epochs: 100
   seed: 42
   max_lr: 0.001
   power: 0.9
   min_lr: 0.00001
-  warmup_epochs: 10
+  warmup_epochs: 5
 
-
-# 数据集公共配置
-# 由于不同数据可能会使用不同的增强方式
-# 所以将增强的定义放在这里管理
+# dataset setting, include all the data set
 datasets:
   isic2018:
     size: 224

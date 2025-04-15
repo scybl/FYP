@@ -16,6 +16,7 @@ class PolyWarmupScheduler:
         self.power = power
         self.eta_min = eta_min
         self.current_epoch = 0
+        self.poly_factor = (1 - (self.current_epoch - self.warmup_epochs) / (self.total_epochs - self.warmup_epochs)) ** self.power
 
     def step(self):
         """
@@ -24,12 +25,9 @@ class PolyWarmupScheduler:
         if self.current_epoch < self.warmup_epochs:
             # **Warmup阶段：线性增加学习率**
             lr = self.eta_min + (self.initial_lr - self.eta_min) * (self.current_epoch / self.warmup_epochs)
-            print(lr)
         else:
             # **Poly Decay阶段**
-            poly_factor = (1 - (self.current_epoch - self.warmup_epochs) / (
-                        self.total_epochs - self.warmup_epochs)) ** self.power
-            lr = (self.initial_lr - self.eta_min) * poly_factor + self.eta_min
+            lr = (self.initial_lr - self.eta_min) * self.poly_factor + self.eta_min
 
         # **更新优化器中的学习率**
         for param_group in self.optimizer.param_groups:

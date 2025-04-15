@@ -2,15 +2,16 @@ import os
 import torch
 from torchvision.utils import save_image
 
+from Evaluate.evaluate import dice
 from LoadData.data import get_dataset
 from LoadData.utils import load_config
 from Evaluate.LearningRate import PolyWarmupScheduler
 from Evaluate.LossChoose import LossFunctionHub
 from model_defination.model_loader import load_model
 from torch.optim import AdamW
-import time
-from monai.metrics import DiceMetric
-from monai.transforms import AsDiscrete
+
+from fvcore.nn import FlopCountAnalysis, parameter_count_table
+
 
 
 class Trainer:
@@ -59,28 +60,18 @@ class Trainer:
 
     def val(self) -> float:
         self.net.eval()  # 设置评估模式
-        dice_metric = DiceMetric(include_background=False, reduction="mean_batch")
         num_batches = 0
         dice_scores = []
 
         with torch.no_grad():
             for i, (image, segment_image) in enumerate(self.val_dataset):  # 或者使用 self.val_loader
                 image, segment_image = image.to(self.device), segment_image.to(self.device)
-                out_image = self.net(image)
-
-                # 后处理输出和标签
-                post_pred = AsDiscrete(argmax=True, to_onehot=True, num_classes=2)
-                post_label = AsDiscrete(to_onehot=True, num_classes=2)
-
-                pred_onehot = post_pred(out_image)
-                label_onehot = post_label(segment_image)
+                out_image = torch.sigmoid(self.net(image)) # 二分类激活
 
                 # 计算 Dice 指标
-                dice_metric(y_pred=pred_onehot, y=label_onehot)
-                dice_score = dice_metric.aggregate().item()
+                dice_score = dice(pred=out_image, target=segment_image)
                 dice_scores.append(dice_score)
 
-                dice_metric.reset()
                 num_batches += 1
 
                 ####################################################################################
@@ -101,16 +92,14 @@ class Trainer:
                 ####################################################################################
 
         # 计算平均 Dice
-        avg_dice = sum(dice_scores) / num_batches if num_batches > 0 else 0.0
+        avg_dice = sum(dice_scores) / num_batches
         print(f"Validation Dice: {avg_dice:.6f}")
         return avg_dice
 
-
     def train(self):
         epochs = 1
-        best_val_loss = float('inf')
+        best_val = self.val()
 
-        stop_epochs = 0
         while epochs <= self.config["setting"]['epochs']:
             self.net.train()  # 确保模型处于训练模式
             for i, (image, segment_image) in enumerate(self.train_dataset):
@@ -122,7 +111,6 @@ class Trainer:
                 # print(f'out_img的大小为: f{out_image.size()}')
 
                 train_loss = self.loss_fn(out_image, segment_image)
-
 
                 train_loss.backward()
                 self.opt.step()
@@ -136,69 +124,64 @@ class Trainer:
                 print(f"Epoch {epochs} --- Step {i} --- Loss: {train_loss.item():.6f} --- LR: {current_lr:.6f}")
 
             # 每个 epoch 后调用验证函数
-            val_loss = self.val()
+            val_dice = self.val()
 
             # 保存最优模型逻辑（示例：当验证 loss 更低时保存）
-            if val_loss < best_val_loss:
-                best_val_loss = val_loss
+            if val_dice > best_val:
+                best_val = val_dice
                 torch.save(self.net.state_dict(), f"{self.save_model_path}_{self.dataset_name}_best.pth")
                 print(f"Epoch {epochs}: 找到更优模型，保存模型。")
-                stop_epochs = 0
-            else:
-                stop_epochs += 1
+
 
             # 更新学习率
             self.scheduler.step()
             epochs += 1
 
-            if stop_epochs > 100:
-                break
+    def analyze(self, input_tensor_size):
+        """
+        根据输入张量尺寸计算模型的 FLOPs 和参数数量，并打印结果。
+
+        参数:
+        input_tensor_size (tuple): 输入张量尺寸，格式为 (Channels, Height, Width)
+        """
+        # 构造一个与模型输入匹配的随机张量 (Batch size 默认为 1)
+        input_tensor = torch.randn(1, *input_tensor_size).to(self.device)
+
+        # 使用 FlopCountAnalysis 计算 FLOPs
+        flops = FlopCountAnalysis(self.net, input_tensor)
+        print("Total FLOPs:", flops.total())
+
+        # 输出模型参数数量统计
+        print("\nParameters:")
+        print(parameter_count_table(self.net))
+
+
 # 运行训练
 if __name__ == "__main__":
-    model_hub = [
-        # "duck",
-        "unetpp",
-        "bnet",
-        'unet',
-        "bnet34",
-    ]
-    dataset_hub = [
-        'kvasir',
-        'clinicdb',
-        'isic2018',
-        # 'sunapse'
-    ]
-
-    train_config_path = 'configs/config.yaml'
-    for model_name in model_hub:
-        for dataset_name in dataset_hub:
-            print(dataset_name)
-            print(model_name)
-
-            trainer = Trainer(train_config_path, model_name=model_name, dataset_name=dataset_name)
-            trainer.train()
-
-            # print("休息20分钟")
-            # time.sleep(1200) # 休息20分钟
-            # print("休息完成")
-
+    
     model_hub = [
         # "duck",
         # "unetpp",
         # "bnet",
         # 'unet',
-        "bnet34",
+        # "bnet34",
+        # 'unext',
+        'dga',
+        'pham'
     ]
     dataset_hub = [
         'kvasir',
-        'clinicdb',
-        'isic2018',
-        # 'sunapse'
+        # 'clinicdb',
+        # 'isic2018',
+        # 'synapse'
     ]
+
+    train_config_path = 'configs/config.yaml'
     for model_name in model_hub:
         for dataset_name in dataset_hub:
-            print(dataset_name)
-            print(model_name)
 
+            print('-----------------')
             trainer = Trainer(train_config_path, model_name=model_name, dataset_name=dataset_name)
-            trainer.train()
+            trainer.analyze((3,224,224))
+            # trainer.train()
+

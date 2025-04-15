@@ -4,11 +4,18 @@ from model_defination.AAA_BNet.BNet_Res34 import BNet_Res34
 from model_defination.AAA_BNet.Bnet import BNet
 from model_defination.AAA_DuckNet.DuckNet import  DuckNet
 from model_defination.AAA_Unet.unet import UNetBase
+from model_defination.AAA_Unext.unext import UNext
 from model_defination.AAA_unetpp.unetpp import UnetPP
+from model_defination.AAA_BNet.DGANet import DGANet
+from model_defination.AAA_BNet.PHAMNet import PHAMNet
+
 
 import os
 from glob import glob
 import logging
+
+logging.basicConfig(level=logging.ERROR, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
 def get_best_or_latest_model_path(model_path, model_name, dataset_name):
     f"""
@@ -39,19 +46,19 @@ def get_best_or_latest_model_path(model_path, model_name, dataset_name):
     return numbered_files[0][0]
 
 
-
 def get_model_hub(in_channel,class_num):
     # 模型映射表
     model_hub = {
-        # TODO：模型我想添加
-        # TODO：duck-net https://github.com/RazvanDu/DUCK-Net
-        # TODO: nn-unet https://github.com/MIC-DKFZ/nnUNet
         "bnet34": lambda: BNet_Res34(in_channel=in_channel, num_classes=class_num, encoder_mode='res34', pre_train=True),
         "bnet": lambda : BNet(in_channel=in_channel, num_classes=class_num),
         "unet": lambda: UNetBase(in_channel=in_channel,class_num=class_num),
 
         "unetpp": lambda: UnetPP(in_channel,num_classes=class_num, deep_supervision=False),
         "duck": lambda: DuckNet(in_channel=in_channel, num_classes=class_num),
+
+        'unext': lambda: UNext(num_classes=class_num, input_channels=in_channel,deep_supervision=True),
+        'pham':lambda: PHAMNet(num_classes=class_num,in_channel=in_channel,deep_supervisor=False),
+        'dga': lambda: DGANet(num_classes=class_num,in_channel=in_channel,deep_supervisor=False),
     }
     return model_hub
 
@@ -63,7 +70,6 @@ def load_model(_config, _model_name, dataset_name):
     :param _config: 配置字典，包含模型名称、路径等信息。
     :return: 初始化的模型实例。
     """
-    _model_name = _model_name
     model_path = _config.get("model")['save_path']
 
     dataset_name = dataset_name
@@ -80,13 +86,22 @@ def load_model(_config, _model_name, dataset_name):
     model = model_hub[_model_name]()
 
 
+
+
     try:
         weight_path = get_best_or_latest_model_path(model_path, _model_name, dataset_name)
         print(f"Loading weights from {weight_path}")
-        model.load_state_dict(torch.load(weight_path, map_location=device, weights_only=True))
-        print("Successfully loaded weights.")
-    except FileNotFoundError as e:
-        print(e)
-        print("No weights loaded.")
+
+        check_point = torch.load(weight_path, map_location=device, weights_only=True)
+        load_result = model.load_state_dict(check_point, strict=False)
+
+        if load_result.missing_keys or load_result.unexpected_keys:
+            logging.error(f"Model loading issues detected. Missing keys: {load_result.missing_keys}, Unexpected keys: {load_result.unexpected_keys}")
+        else:
+            print("Successfully loaded weights.")
+
+    except Exception as e:
+        logging.error(f"Error loading weights: {e}")
+
 
     return model.to(device)

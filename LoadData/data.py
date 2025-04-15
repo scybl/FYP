@@ -5,7 +5,7 @@ from torch.utils.data import DataLoader
 from LoadData.KvasirSEG_Dataset import KvasirSEG_Dataset
 from LoadData.Synapse_Dataset import Synapse_Dataset
 
-
+import logging
 class LabelProcessor:
     """
     标签预处理器：将标签转换为指定的通道数，确保标签格式符合网络需求
@@ -63,8 +63,6 @@ def get_dataset(config, dataset_name, mode):
 
     # 初始化数据集
     dataset = dataset_class(dataset_config, mode)
-
-    print(f"{dataset.__len__()}")
 
     data_all = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
 

@@ -1,5 +1,5 @@
 from torch import nn
-from Block.ConvBlock import ConvBlock
+from Block.ConvBlock import ConvBlock2
 import torch.nn.functional as F
 
 
@@ -7,7 +7,7 @@ class InceptionAux(nn.Module):
     def __init__(self, in_channels, num_classes):
         super(InceptionAux, self).__init__()
         self.averagePool = nn.AvgPool2d(kernel_size=5, stride=3)
-        self.conv = ConvBlock(in_channels, 128, 1, 1, 0)
+        self.conv = ConvBlock2(in_channels, 128, 1, 1, 0)
 
         self.fc1 = nn.Linear(2048, 1024)
         self.fc2 = nn.Linear(1024, num_classes)

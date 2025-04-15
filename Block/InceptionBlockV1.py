@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from Block.ConvBlock import ConvBlock
+from Block.ConvBlock import ConvBlock2
 
 
 class InceptionBlockV1(nn.Module):
@@ -27,22 +27,22 @@ class InceptionBlockV1(nn.Module):
         super(InceptionBlockV1, self).__init__()
 
         self.branch1 = nn.Sequential(
-            ConvBlock(channels, ch1x1, 1, 1, 0)
+            ConvBlock2(channels, ch1x1, 1, 1, 0)
         )
 
         self.branch2 = nn.Sequential(
-            ConvBlock(channels, ch3x3red, 1, 1, 0),
-            ConvBlock(ch3x3red, ch3x3, 3, 1, 1)
+            ConvBlock2(channels, ch3x3red, 1, 1, 0),
+            ConvBlock2(ch3x3red, ch3x3, 3, 1, 1)
         )
 
         self.branch3 = nn.Sequential(
-            ConvBlock(channels, ch5x5red, 1, 1, 0),
-            ConvBlock(ch5x5red, ch5x5, 5, 1, 2),
+            ConvBlock2(channels, ch5x5red, 1, 1, 0),
+            ConvBlock2(ch5x5red, ch5x5, 5, 1, 2),
         )
 
         self.branch4 = nn.Sequential(
             nn.MaxPool2d(3, 1, 1),
-            ConvBlock(channels, pool_proj, 1, 1, 0)
+            ConvBlock2(channels, pool_proj, 1, 1, 0)
         )
 
     def forward(self, x):
