@@ -123,7 +123,6 @@ if __name__ == "__main__":
                 prec_avg += d
                 recall_avg += e
 
-            # 最终取平均值
             print(f"Average Results for {model_name} on {dataset_name}:")
             print(f"Dice Avg: {dice_avg / repeat_times:.6f}")
             print(f"Miou Avg: {miou_avg / repeat_times:.6f}")

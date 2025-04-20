@@ -23,21 +23,21 @@ class Trainer:
 
         self.dataset_name = dataset_name
         self.train_dataset = get_dataset(self.config, self.dataset_name, 'train')
-        self.val_dataset = get_dataset(self.config, self.dataset_name, 'val')  # 这里写入验证数据集
+        self.val_dataset = get_dataset(self.config, self.dataset_name, 'val')
 
         self.net = load_model(self.config, model_name, dataset_name).to(self.device)
 
         if self.class_num == 1:
             loss_hub = LossFunctionHub(loss_name="dice_ce", include_background=False, to_onehot_y=False, softmax=False,
-                                       sigmoid=True)  # 单分类
+                                       sigmoid=True)  # single
         else:
             loss_hub = LossFunctionHub(loss_name="dice_ce", include_background=True, to_onehot_y=False, softmax=True,
-                                       sigmoid=False)  # 多分类
+                                       sigmoid=False)  # multi-classes
 
         self.loss_fn = loss_hub.get_loss_function()
 
         self.opt = AdamW(self.net.parameters(), lr=self.config["setting"]['min_lr'],
-                         betas=(0.99, 0.95))  # AdamW 比 Adam 更适合现代深度学习任务，因为：
+                         betas=(0.99, 0.95)) 
         self.scheduler = PolyWarmupScheduler(
             optimizer=self.opt,
             warmup_epochs=self.config["setting"]['warmup_epochs'],
@@ -59,23 +59,23 @@ class Trainer:
                 f.write("epoch,step,train_loss\n")
 
     def val(self) -> float:
-        self.net.eval()  # 设置评估模式
+        self.net.eval()  # evaluate
         num_batches = 0
         dice_scores = []
 
         with torch.no_grad():
-            for i, (image, segment_image) in enumerate(self.val_dataset):  # 或者使用 self.val_loader
+            for i, (image, segment_image) in enumerate(self.val_dataset):
                 image, segment_image = image.to(self.device), segment_image.to(self.device)
-                out_image = torch.sigmoid(self.net(image)) # 二分类激活
+                out_image = torch.sigmoid(self.net(image)) # sigmoid
 
-                # 计算 Dice 指标
+                # Dice
                 dice_score = dice(pred=out_image, target=segment_image)
                 dice_scores.append(dice_score)
 
                 num_batches += 1
 
                 ####################################################################################
-                # 保存图像，用于可视化
+                # save
                 _image = image[0]
                 _segment_image = segment_image[0]
                 _out_image = out_image[0]
