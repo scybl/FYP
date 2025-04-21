@@ -3,7 +3,6 @@ import torch.nn as nn
 
 
 class ConvBlock(nn.Module):
-    # 一个连续的卷积模块，包含BatchNorm 在前 和 在后 两种模式
     def __init__(self, in_channels, out_channels, pre_Batch_Norm=True):
         super(ConvBlock, self).__init__()
         self.in_channels = in_channels
@@ -76,7 +75,6 @@ class UnetPP(nn.Module):
 
         self.upsample_3_1 = nn.ConvTranspose2d(in_channels=1024, out_channels=512, kernel_size=4, stride=2, padding=1)
 
-        # 分割头
         self.final_super_0_1 = nn.Sequential(
             nn.BatchNorm2d(64),
             nn.ReLU(),

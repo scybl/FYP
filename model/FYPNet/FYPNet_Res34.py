@@ -1,17 +1,10 @@
 from torch import nn
 
-from model_defination.AAA_BNet.BNetBlock import CCBlock, DAG, PHAM, UCB
-from model_defination.AAA_BNet.ResNet import resnet34, resnet50, resnet101, resnet152
-
-"""
-这个是所有的B-Net架构的内容，我将所有封装的模块都写在这里，方便后续更改
-"""
+from model.FYPNet.FYPNetBlock import CCBlock, DAG, PHAM, UCB
+from model.FYPNet.ResNet import resnet34, resnet50, resnet101, resnet152
 
 
 class Input_project(nn.Module):
-    '''
-    这个class用来处理输入，转换为三通道
-    '''
 
     def __init__(self, in_channel):
         super(Input_project, self).__init__()
@@ -54,7 +47,7 @@ class Decoder(nn.Module):
         self.dag3 = DAG(256)
 
         self.pham1 = PHAM(512)
-        self.ucb1 = UCB(512, 256)  # 同时缩减通道维度并扩张空间维度, (256,64,64)
+        self.ucb1 = UCB(512, 256)
 
         self.pham2 = PHAM(256)
         self.ucb2 = UCB(256, 128)
@@ -90,16 +83,13 @@ class Decoder(nn.Module):
 
 class Output_project(nn.Module):
     """
-    这个class用来处理模型生成输出的通道投影
+    This class is used to handle the channel projection of the model's generated output.
     """
 
     def __init__(self, out_channel, supervisor):
         super(Output_project, self).__init__()
         self.supervisor = supervisor
         self.out_channel = out_channel
-        # 假设decoder的输出通道数为64，
-        # 首先使用上采样将图像从64×56×56扩张到64×224×224，
-        # 然后用1x1卷积将通道投影到指定的out_channel
         self.out_project = nn.Sequential(
             nn.Upsample(scale_factor=4, mode='bilinear', align_corners=False),
             nn.Conv2d(64, out_channel, kernel_size=1, stride=1),
@@ -119,9 +109,8 @@ class BNet_Res34(nn.Module):
         super(BNet_Res34, self).__init__()
         self.input_project = Input_project(in_channel)
 
-        # 从这里开始加载预训练模型
         self.encoder = Encoder(encoder_mode=encoder_mode, pretrain=pre_train)
-        self.decoder = Decoder(deep_supervisor)  # 返回一个图像，如果是
+        self.decoder = Decoder(deep_supervisor)
 
         self.out_project = Output_project(num_classes, deep_supervisor)
 

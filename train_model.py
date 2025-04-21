@@ -7,11 +7,10 @@ from LoadData.data import get_dataset
 from LoadData.utils import load_config
 from Evaluate.LearningRate import PolyWarmupScheduler
 from Evaluate.LossChoose import LossFunctionHub
-from model_defination.model_loader import load_model
+from model.model_loader import load_model
 from torch.optim import AdamW
 
 from fvcore.nn import FlopCountAnalysis, parameter_count_table
-
 
 
 class Trainer:
@@ -37,7 +36,7 @@ class Trainer:
         self.loss_fn = loss_hub.get_loss_function()
 
         self.opt = AdamW(self.net.parameters(), lr=self.config["setting"]['min_lr'],
-                         betas=(0.99, 0.95)) 
+                         betas=(0.99, 0.95))
         self.scheduler = PolyWarmupScheduler(
             optimizer=self.opt,
             warmup_epochs=self.config["setting"]['warmup_epochs'],
@@ -66,30 +65,13 @@ class Trainer:
         with torch.no_grad():
             for i, (image, segment_image) in enumerate(self.val_dataset):
                 image, segment_image = image.to(self.device), segment_image.to(self.device)
-                out_image = torch.sigmoid(self.net(image)) # sigmoid
+                out_image = torch.sigmoid(self.net(image))  # sigmoid
 
                 # Dice
                 dice_score = dice(pred=out_image, target=segment_image)
                 dice_scores.append(dice_score)
 
                 num_batches += 1
-
-                ####################################################################################
-                # save
-                _image = image[0]
-                _segment_image = segment_image[0]
-                _out_image = out_image[0]
-
-                # 将单通道重复 3 次以便可视化
-                _segment_image = _segment_image.repeat(3, 1, 1)
-                _out_image = _out_image.repeat(3, 1, 1)
-
-                # 堆叠图像：原图、标签图、输出图
-                img = torch.stack([_image, _segment_image, _out_image], dim=0)
-                save_path = os.path.join(self.config['save_image_path'],
-                                         f"{self.model_name}_{self.dataset_name}_{i}.png")
-                save_image(img, save_path)
-                ####################################################################################
 
         # 计算平均 Dice
         avg_dice = sum(dice_scores) / num_batches
@@ -106,82 +88,77 @@ class Trainer:
                 self.opt.zero_grad()
                 image, segment_image = image.to(self.device), segment_image.to(self.device)
                 out_image = self.net(image)
-                # print(f'image的大小为: f{image.size()}')
-                # print(f'mask的大小为: f{segment_image.size()}')
-                # print(f'out_img的大小为: f{out_image.size()}')
+                # print(f'The size of the image is: f{image.size()}')
+                # print(f'The size of the mask is: f{segment_image.size()}')
+                # print(f'The size of the out_img is: f{out_image.size()}')
 
                 train_loss = self.loss_fn(out_image, segment_image)
 
                 train_loss.backward()
                 self.opt.step()
 
-                # 保存训练日志
+                # save the logging
                 with open(self.loss_log_path, "a") as f:
                     f.write(f"{epochs},{i},{train_loss.item():.6f}\n")
 
                 current_lr = self.opt.param_groups[0]['lr']
-                # 注意：scheduler.get_lr() 可能返回列表，这里需要根据实际情况调整断言
                 print(f"Epoch {epochs} --- Step {i} --- Loss: {train_loss.item():.6f} --- LR: {current_lr:.6f}")
 
-            # 每个 epoch 后调用验证函数
             val_dice = self.val()
 
-            # 保存最优模型逻辑（示例：当验证 loss 更低时保存）
+            # save the best
             if val_dice > best_val:
                 best_val = val_dice
                 torch.save(self.net.state_dict(), f"{self.save_model_path}_{self.dataset_name}_best.pth")
-                print(f"Epoch {epochs}: 找到更优模型，保存模型。")
+                print(f"Epoch {epochs}: save the best model")
 
-
-            # 更新学习率
+            # update the lr
             self.scheduler.step()
             epochs += 1
 
     def analyze(self, input_tensor_size):
         """
-        根据输入张量尺寸计算模型的 FLOPs 和参数数量，并打印结果。
+            Calculate the FLOPs and number of parameters of the model based on
+            the input tensor size and print the results.
 
-        参数:
-        input_tensor_size (tuple): 输入张量尺寸，格式为 (Channels, Height, Width)
+            Parameters:
+            input_tensor_size (tuple): Input tensor size, format (Channels, Height, Width)
         """
-        # 构造一个与模型输入匹配的随机张量 (Batch size 默认为 1)
+        # Construct a random tensor that matches the model input (Batch size defaults to 1)
+
         input_tensor = torch.randn(1, *input_tensor_size).to(self.device)
 
-        # 使用 FlopCountAnalysis 计算 FLOPs
         flops = FlopCountAnalysis(self.net, input_tensor)
         print("Total FLOPs:", flops.total())
 
-        # 输出模型参数数量统计
         print("\nParameters:")
         print(parameter_count_table(self.net))
 
 
-# 运行训练
+# run
 if __name__ == "__main__":
-    
+
     model_hub = [
-        # "duck",
-        # "unetpp",
-        # "bnet",
-        # 'unet',
-        # "bnet34",
-        # 'unext',
+        "duck",
+        "unetpp",
+        "bnet",
+        'unet',
+        "bnet34",
+        'unext',
         'dga',
         'pham'
     ]
     dataset_hub = [
         'kvasir',
-        # 'clinicdb',
-        # 'isic2018',
+        'clinicdb',
+        'isic2018',
         # 'synapse'
     ]
 
     train_config_path = 'configs/config.yaml'
     for model_name in model_hub:
         for dataset_name in dataset_hub:
-
             print('-----------------')
             trainer = Trainer(train_config_path, model_name=model_name, dataset_name=dataset_name)
-            trainer.analyze((3,224,224))
+            trainer.analyze((3, 224, 224))
             # trainer.train()
-

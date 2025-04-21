@@ -1,38 +1,35 @@
-# TODO：使用transunet的数据集加载来获取数据集
-# TODO: 深度监督的处理方法，通过添加特征头即可
-# TODO: 修复test class
-# TODO: 使用fvcore来计算模型的参数和FLOPs
-
-# 进度
-# TODO: 将BNet的block AMP和APP的卷积层改为线性层
-# TODO：更改优化器从，Adam换成AdamW(已完成)
-# TODO: 查看h5文件,在终端输入vitables,然后打开文件(已解决)
-# TODO：更改学习率的部分，这里有问题,(已解决)
-# 制作一个line table来说明这个，最后调用poly
-# TODO：更改动态学习率（已完成）再换（完成）
-# Poly Strategy, H2Former，
-# warmup, 训练 K 轮之后，lr再降低，
-# Spark: https://github.com/keyu-tian/SparK/blob/main/pretrain/utils/lr_control.py, warm-up 锁定，K轮次之后再降低lr
-# 关于我为什么放弃warm up，因为warm up主要用于大模型前期训练的稳定，主要出现于模型注意力模块训练前期模型的性能稳定
-# TODO：学习transunet的enocder部分, 作一下encoder的部分，调用一个预训练模型（已完成）
-# 已经成功加载res34预训练模型
-# TODO: kvasir和clinicDB数据集训练出来结果全黑,需要完整训练测试（已解决）
+# Progress
+# TODO: Change the convolution layers of FYPNet's block AMP and APP to linear layers (completed)
+# TODO: Change the optimizer from Adam to AdamW (completed)
+# TODO: View the h5 file by typing vitables in the terminal, then open the file (resolved)
+# TODO: Modify the learning rate section, there's an issue here (resolved)
+# Create a line table to explain this, and finally call poly
+# TODO: Modify the dynamic learning rate (completed) then change (completed)
+# Poly Strategy, H2Former
+# Warmup, after K rounds of training, reduce the lr again
+# Spark: https://github.com/keyu-tian/SparK/blob/main/pretrain/utils/lr_control.py, warm-up locked, then reduce lr after K rounds
+# Regarding why I gave up on warm-up: warm-up is mainly used for stabilizing large model training in the early stages, and it usually occurs in the initial training phase of the model’s attention module to stabilize the model’s performance
+# TODO: Study the encoder part of TransUnet, implement the encoder part, and call a pre-trained model (completed)
+# Successfully loaded the Res34 pre-trained model
+# TODO: Kvasir and ClinicDB dataset training results are all black, need complete training testing (resolved)
 """
-数据质量问题：数据集中可能存在噪音、图像质量差或者标签不准确等问题，这会导致模型学习到错误的特征或者无法正确学习到目标结构。
-数据量不足：数据过少
-数据不平衡：数据集中正例和负例之间的分布不平衡，模型可能会倾向于预测更常见的类别，而忽略较少出现的类别
-数据预处理不当：图像尺寸的标准化、数据增强、图像配准等预处理步骤可以提高模型的鲁棒性和泛化能力。
-超参数选择不当：学习率、优化器、损失函数等选择都会影响模型的性能
+Data Quality Issues: The dataset may have noise, poor image quality, or inaccurate labels, which can lead the model to learn incorrect features or fail to learn the target structure correctly.
+Insufficient Data: Too little data
+Data Imbalance: The distribution of positive and negative examples in the dataset is imbalanced, causing the model to lean toward predicting the more common category and ignore less frequent ones.
+Improper Data Preprocessing: Preprocessing steps such as image size standardization, data augmentation, and image registration can improve the model's robustness and generalization ability.
+Improper Hyperparameter Selection: The choice of learning rate, optimizer, loss function, etc., can impact the model's performance.
 """
-# 初步认为是模型本身和能力不足的问题
-# TODO: 最近发现针对于分割任务,他的边缘问题应该着重注意,边缘平滑,边缘模糊问题对于模型影响很大
-# Question: 针对于肠息肉数据,色彩信息能够提供一定的分割信息，
-# 但是相比之下，肠息肉的形状、纹理信息对于分割而言则是更加重要的特征来源。
-# TODO: 添加一个划分验证集，测试集，训练集（已完成）
-# 已经成功分割train,test,val = 7:2:1
-# TODO: 为数据集添加mode加载数据的方法 (已完成)
-# isic2018 (已完成)
-# clinicDB (已完成)
-# kvasir (已完成)
-# TODO: Bnet模型出现问题，需修复 （已完成）
-# TODO: 修复5个模型的加载unet， bnet， bnet34， duck， unetpp （已完成）
+# Initially believed to be a problem of insufficient model capability
+# TODO: Recently found that for segmentation tasks, the edge problem should be focused on, as edge smoothing and edge blurring significantly affect the model's performance (completed)
+# Question: For colon polyp data, color information provides some segmentation information, but compared to that, the shape and texture of polyps are more important features for segmentation.
+# TODO: Add a validation set, test set, and training set division (completed)
+# Successfully divided into train, test, val = 7:2:1
+# TODO: Add mode loading method for the dataset (completed)
+# isic2018 (completed)
+# clinicDB (completed)
+# kvasir (completed)
+# TODO: FYPNet model has issues, need to fix (completed)
+# TODO: Fix the loading of 5 models: unet, bnet, bnet34, duck, unetpp (completed)
+# TODO: Use TransUnet's dataset loader to get the dataset (completed)
+# TODO: Handle deep supervision by adding feature heads (completed)
+# TODO: Fix the test class (completed)

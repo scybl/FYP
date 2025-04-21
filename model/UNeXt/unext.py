@@ -6,7 +6,6 @@ from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 import math
 
 
-
 class shiftmlp(nn.Module):
     def __init__(self, in_features, hidden_features=None, out_features=None, act_layer=nn.GELU, drop=0., shift_size=5):
         super().__init__()
@@ -304,6 +303,5 @@ class UNext(nn.Module):
         out = F.relu(F.interpolate(self.decoder5(out), scale_factor=(2, 2), mode='bilinear'))
 
         return self.final(out)
-
 
 # EOF

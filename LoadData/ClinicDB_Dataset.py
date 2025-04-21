@@ -10,7 +10,7 @@ from LoadData.utils import build_transforms
 
 class ClinicDB_Dataset(Dataset):
     """
-    ClinicDB Dataset. 读取文件，返回文件的tensor格式
+    ClinicDB Dataset class
     """
 
     def __init__(self, config, mode):
@@ -31,10 +31,8 @@ class ClinicDB_Dataset(Dataset):
         self.img_list = os.listdir(self.img_path)
         self.mask_list = os.listdir(self.mask_path)
 
-        # **使用 SynchronizedTransform 进行同步数据增强**
         self.transforms = build_transforms(config['augmentations'])
 
-        # **确保最终数据转换为 Tensor**
         self.to_tensor = transforms.ToTensor()
         self.transform_label = None
 
@@ -48,9 +46,9 @@ class ClinicDB_Dataset(Dataset):
         img_path = os.path.join(self.img_path, img_file_name)
         mask_path = os.path.join(self.mask_path, mask_file_name)
 
-        # 读取TIF图像
-        image = tiff.imread(img_path)  # ndarray [288,384,3] ,是一个三通道图片
-        mask = tiff.imread(mask_path)  # ndarray [288,384],是一个单通道图片
+        # TIP image
+        image = tiff.imread(img_path)
+        mask = tiff.imread(mask_path)
 
         image = Image.fromarray(image)
         mask = Image.fromarray(mask)

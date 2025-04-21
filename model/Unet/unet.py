@@ -11,7 +11,7 @@ class UNetBase(nn.Module):
     """
     def __init__(self, in_channel, class_num=1):
         super(UNetBase, self).__init__()
-        # ------开始下采样
+        # ---- down sample
         self.layer1 = nn.Sequential(
             ConvBlock2(in_channel, 64, 3, 1, 1, "reflect", False, 0.3),
             ConvBlock2(64, 64, kernel_size=3, stride=1, padding=1, padding_mode='reflect',
@@ -46,7 +46,7 @@ class UNetBase(nn.Module):
                       bias=False, dropout_rate=0.3)
         )
 
-        # -------开始上采样
+        # -------up sample
         self.up1 = UpSample(1024)
         self.layer6 = nn.Sequential(
             ConvBlock2(1024, 512, 3, 1, 1, "reflect", False, 0.3),
@@ -93,4 +93,6 @@ class UNetBase(nn.Module):
         O3 = self.layer8(self.up3(O2, L2))
         O4 = self.layer9(self.up4(O3, L1))
 
-        return self.out(O4)  # 所谓图像分割就是生成一个预期的图片，这个图片大小与输入的图片大小相等
+        return self.out(O4)
+        # Image segmentation refers to generating an expected image,
+        # where the size of the output image is equal to the size of the input image.

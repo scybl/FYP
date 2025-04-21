@@ -1,22 +1,22 @@
 from torch import nn
 
-from model_defination.AAA_BNet.BNetBlock import CCBlock, DAG, PHAM, UCB, DownSample
+from model.FYPNet.FYPNetBlock import CCBlock, DAG, PHAM, UCB, DownSample
 
 """
-这个是所有的B-Net架构的内容，我将所有封装的模块都写在这里，方便后续更改
+    This contains the entire FYP-Net architecture. I have written all the encapsulated modules here for easy future modifications.
 """
 
 
-class BNet(nn.Module):
+class FYPNet(nn.Module):
     """
     according to the channel num to do
     """
 
     def __init__(self, in_channel, num_classes, deep_supervisor=False):
-        super(BNet, self).__init__()
+        super(FYPNet, self).__init__()
         self.supervisor = deep_supervisor
 
-        self.cc1 = CCBlock(in_channel, 64)  # 转64通道
+        self.cc1 = CCBlock(in_channel, 64)
 
         self.down1 = DownSample(64)
         self.cc2 = CCBlock(64, 128)
@@ -32,7 +32,7 @@ class BNet(nn.Module):
         self.dag3 = DAG(256)
 
         self.pham1 = PHAM(512)
-        self.ucb1 = UCB(512, 256)  # 同时缩减通道维度并扩张空间维度, (256,64,64)
+        self.ucb1 = UCB(512, 256)
 
         self.pham2 = PHAM(256)
         self.ucb2 = UCB(256, 128)

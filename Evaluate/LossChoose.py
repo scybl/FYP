@@ -10,30 +10,27 @@ loss_fn = loss_hub.get_loss_function()
 """
 
 
-# MONAI https://docs.monai.io/en/stable/losses.html 用这个包
-
 class LossFunctionHub:
     def __init__(self, loss_name="dice_ce", **kwargs):
         """
-        根据 loss_name 动态返回损失函数
-        :param loss_name: 选择的损失函数，如 "dice_ce", "cross_entropy", "focal", "tversky"
-        :param kwargs: 其他参数，如 class_weight, lambda_dice, lambda_ce 等
+            Dynamically return the loss function based on loss_name
+            :param loss_name: Selected loss function, such as "dice_ce", "cross_entropy", "focal", "tversky"
+            :param kwargs: Other parameters, such as class_weight, lambda_dice, lambda_ce, etc.
         """
         self.loss_name = loss_name.lower()
         self.kwargs = kwargs
 
     def get_loss_function(self):
-        """ 返回指定的损失函数实例 """
 
         if self.loss_name == "dice_ce":
             return DiceCELoss(
-                include_background=self.kwargs.get("include_background", True),  # 是否计算背景
-                to_onehot_y=self.kwargs.get("to_onehot_y", False),  # 是否将标签转换为one-hot格式
-                sigmoid=self.kwargs.get("sigmoid", False),  # 多类别-softmax，二分类 sigmoid
+                include_background=self.kwargs.get("include_background", True),
+                to_onehot_y=self.kwargs.get("to_onehot_y", False),
+                sigmoid=self.kwargs.get("sigmoid", False),
                 softmax=self.kwargs.get("softmax", False),
-                reduction=self.kwargs.get("reduction", "mean"),  # 计算多个batch的平均损失
-                lambda_dice=self.kwargs.get("lambda_dice", 0.5),  # dice loss 权重
-                lambda_ce=self.kwargs.get("lambda_ce", 0.5),  # cross entropy 权重
+                reduction=self.kwargs.get("reduction", "mean"),
+                lambda_dice=self.kwargs.get("lambda_dice", 0.5),
+                lambda_ce=self.kwargs.get("lambda_ce", 0.5),
             )
 
         elif self.loss_name == "dice":
