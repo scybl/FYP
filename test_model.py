@@ -1,157 +1,128 @@
-import random
+import os
+import torch
 import numpy as np
-from torch import nn
+import random
+from torchvision.utils import save_image
+
+from Evaluate.evaluate import dice, miou, binary_accuracy, binary_recall, binary_precision, binary_jaccard_index
 from LoadData.data import get_dataset
 from LoadData.utils import load_config
-from model_defination.model_loader import load_model
-import os
-import csv
-import torch
+from Evaluate.LossChoose import LossFunctionHub
+from model.model_loader import load_model
 
 
-def set_seed(seed):
-    """设置随机种子以确保结果一致性"""
-    random.seed(seed)  # 设置 Python 原生的随机数生成器的种子
-    np.random.seed(seed)  # 设置 NumPy 随机数生成器的种子
-    torch.manual_seed(seed)  # 设置 PyTorch 随机数生成器的种子（CPU）
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed)  # 设置当前 GPU 设备的随机种子
-        torch.cuda.manual_seed_all(seed)  # 为所有 GPU 设备设置随机种子
-        torch.backends.cudnn.deterministic = True  # 确保 CUDA 使用确定性算法
-        torch.backends.cudnn.benchmark = False  # 关闭优化以确保一致性
+# import warnings
+# warnings.warn("single channel prediction, `to_onehot_y=True` ignored.")
 
+class Tester:
 
-class SegmentationEvaluator:
-    def __init__(self, config_path):
-        # 加载配置文件
-        self.net = None
+    def __init__(self, config_path, _model_name, _dataset_name):
+        # config setting
         self.config = load_config(config_path)
-        set_seed(self.config["setting"]['seed'])
         self.device = torch.device(self.config['device'] if torch.cuda.is_available() else "cpu")
-        self.model_path = self.config['model'][('save_path')]
-        self.model_name = self.config['model']['name']
-        self.data_loader = get_dataset(self.config, 'test')
+        self.class_num = self.config["datasets"][_dataset_name]["class_num"]
+        self.model_name = _model_name
+        self.dataset_name = _dataset_name
 
-        dataset_name = self.config['setting']['dataset_name']
-        class_num = self.config["datasets"][dataset_name]['class_num']
+        # load the test dataset, assuming get_dataset supports the "test" mode
+        self.test_dataset = get_dataset(self.config, self.dataset_name, 'test')
 
-        self.loss_fn = DiceCE(class_num)
+        # Load the model and move it to the device.
+        # Note that special settings may be required during testing, such as adjusting the batch_size.
+        self.net = load_model(self.config, _model_name, _dataset_name).to(self.device)
 
-    def load_model(self, model_path):
-        """加载模型权重"""
-        model = load_model(self.config, 'test')
-        model.load_state_dict(torch.load(model_path, map_location=self.device, weights_only=True))
-        return model.to(self.device)
+        self.save_image_path = self.config['save_image_path']
 
-    @staticmethod
-    def dice_coefficient(pred, target):
-        intersection = (pred * target).sum()
-        return (2. * intersection) / (pred.sum() + target.sum() + 1e-6)
+    def test(self) -> float:
+        self.net.eval()
+        num_batches = 0
 
-    @staticmethod
-    def iou_coefficient(pred, target):
-        intersection = (pred * target).sum()
-        union = pred.sum() + target.sum() - intersection
-        return intersection / (union + 1e-6)
+        dice_scores = []
+        miou_scores = []
+        accuracy_scores = []
+        recall_scores = []
+        precision_scores = []
 
-    @staticmethod
-    def pixel_accuracy(pred, target):
-        correct = (pred == target).sum()
-        return correct / target.numel()
+        with torch.no_grad():
+            for i, (image, segment_image) in enumerate(self.test_dataset):
+                image, segment_image = image.to(self.device), segment_image.to(self.device)
+                out_image = self.net(image)
 
-    def evaluate(self):
-        """评估指定路径中的所有模型"""
-        results = []
+                dice_scores.append(dice(pred=out_image, target=segment_image))
+                miou_scores.append(miou(pred=out_image, target=segment_image))
+                accuracy_scores.append(binary_accuracy(pred=out_image, target=segment_image))
+                recall_scores.append(binary_recall(pred=out_image, target=segment_image))
+                precision_scores.append(binary_precision(pred=out_image, target=segment_image))
+                # jaccard_scores.append(binary_jaccard_index(pred=out_image,target=segment_image))
 
-        model_files = [f for f in os.listdir(self.model_path) if f.startswith(self.model_name) and f.endswith(".pth")]
+                num_batches += 1
 
-        if not model_files:
-            print(f"No model files found for {self.model_name} in {self.model_path}")
-            return
+            ####################################################################################
+            # Save test result images for visualization
+            # _image = image[0]
+            # _segment_image = segment_image[0]
+            # _out_image = out_image[0]
 
-        best_model = None
-        best_dice = -1
-        print(f"Found model files: {model_files}")
+            # If the label and output are single-channel, repeat to 3 channels for visualization
+            # _segment_image = _segment_image.repeat(3, 1, 1)
+            # _out_image = _out_image.repeat(3, 1, 1)
 
-        for model_file in model_files:
-            model_path = os.path.join(self.model_path, model_file)
-            print(f"Evaluating model: {model_file}")
+            # Stack the original image, label image, and predicted image
+            # img = torch.stack([_image, _segment_image, _out_image], dim=0)
+            # save_path = os.path.join(self.save_image_path,
+            # f"{self.model_name}_{self.dataset_name}_{i}.png")
+            # save_image(img, save_path)
+            ####################################################################################
 
-            self.net = self.load_model(model_path)
-            self.net.eval()
+        _dice = sum(dice_scores) / num_batches
+        _miou = sum(miou_scores) / num_batches
+        _accuracy = sum(accuracy_scores) / num_batches
+        _precision = sum(precision_scores) / num_batches
+        _recall = sum(recall_scores) / num_batches
 
-            total_loss = 0
-            total_dice = 0
-            total_iou = 0
-            total_pixel_acc = 0
-            num_batches = 0
+        return _dice, _miou, _accuracy, _precision, _recall
 
-            with torch.no_grad():
-                for i, (image, segment_image) in enumerate(self.data_loader):
-                    image, segment_image = image.to(self.device), segment_image.to(self.device)
 
-                    # 网络前向传播
-                    out_image = self.net(image)
-
-                    # 计算损失
-                    loss = self.loss_fn(out_image, segment_image)
-                    total_loss += loss.item()
-
-                    # 生成预测
-                    pred = torch.sigmoid(out_image) > 0.5
-                    pred = pred.float()
-
-                    # 计算评估指标
-                    dice = self.dice_coefficient(pred, segment_image)
-                    total_dice += dice
-
-                    iou = self.iou_coefficient(pred, segment_image)
-                    total_iou += iou
-
-                    pixel_acc = self.pixel_accuracy(pred, segment_image)
-                    total_pixel_acc += pixel_acc
-
-                    num_batches += 1
-
-            avg_loss = total_loss / num_batches
-            avg_dice = total_dice / num_batches
-            avg_iou = total_iou / num_batches
-            avg_pixel_acc = total_pixel_acc / num_batches
-
-            print(
-                f"Model {model_file} - Loss: {avg_loss:.4f}, Dice: {avg_dice:.4f}, IoU: {avg_iou:.4f}, Pixel Accuracy: {avg_pixel_acc:.4f}")
-
-            results.append({
-                "model_file": model_file,
-                "avg_loss": avg_loss, # BSC损失
-                "avg_dice": avg_dice,
-                "avg_iou": avg_iou,
-                "avg_pixel_acc": avg_pixel_acc
-            })
-
-            if avg_dice > best_dice:
-                # 是使用dice作为evaluate 
-                best_dice = avg_dice
-                best_model = model_file
-
-        csv_path = os.path.join(self.config['model']['save_path'], "evaluation_results.csv")
-        with open(csv_path, mode="w", newline="") as csv_file:
-            writer = csv.DictWriter(csv_file,
-                                    fieldnames=["model_file", "avg_loss", "avg_dice", "avg_iou", "avg_pixel_acc"])
-            writer.writeheader()
-            writer.writerows(results)
-
-        print(f"Evaluation results saved to {csv_path}")
-
-        if best_model:
-            best_model_path = os.path.join(self.model_path, best_model)
-            best_model_dest = os.path.join(self.model_path, f"{self.model_name}_best.pth")
-            os.rename(best_model_path, best_model_dest)
-            print(f"Best model '{best_model}' renamed to '{self.model_name}_best.pth'")
+def set_random_seed(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
 
 
 if __name__ == "__main__":
-    CONFIG_NAME = "config_test.yaml"
-    CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
-    evaluator = SegmentationEvaluator(CONFIG_PATH)
-    evaluator.evaluate()
+    model_hub = ["bnet34"]
+    dataset_hub = ['isic2018', 'clinicdb', 'kvasir']
+
+    test_config_path = 'configs/config.yaml'
+
+    repeat_times = 1
+    seeds = [random.randint(1, 10000) for _ in range(repeat_times)]
+    print(seeds)
+    for model_name in model_hub:
+        for dataset_name in dataset_hub:
+
+            print("------------------------------------------")
+            print(model_name + ' || ' + dataset_name)
+            tester = Tester(test_config_path, _model_name=model_name, _dataset_name=dataset_name)
+            dice_avg, miou_avg, acc_avg, prec_avg, recall_avg = 0, 0, 0, 0, 0
+
+            for run in range(repeat_times):
+                seed = seeds[run]
+                set_random_seed(seed)
+                print(f"Running {model_name} on {dataset_name}, Seed: {seed}")
+                a, b, c, d, e = tester.test()
+
+                dice_avg += a
+                miou_avg += b
+                acc_avg += c
+                prec_avg += d
+                recall_avg += e
+
+            print(f"Average Results for {model_name} on {dataset_name}:")
+            print(f"Dice Avg: {dice_avg / repeat_times:.6f}")
+            print(f"Miou Avg: {miou_avg / repeat_times:.6f}")
+            print(f"Accuracy Avg: {acc_avg / repeat_times:.6f}")
+            print(f"Precision Avg: {prec_avg / repeat_times:.6f}")
+            print(f"Recall Avg: {recall_avg / repeat_times:.6f}")

@@ -5,23 +5,25 @@ import torchvision.transforms as transforms
 
 
 class SynchronizedTransform:
-    """确保图像和 mask 同时进行相同增强操作"""
+    """
+    Ensure that the image and mask undergo the same augmentation operations simultaneously
+    """
 
     def __init__(self, transforms_list):
         self.transforms = transforms_list
 
     def __call__(self, image, mask=None):
-        seed = random.randint(0, 2 ** 32)  # 生成一次随机种子
+        seed = random.randint(0, 2 ** 32)  # random seed
         random.seed(seed)
         torch.manual_seed(seed)
 
         for transform in self.transforms:
             if isinstance(transform, transforms.ColorJitter):
-                image = transform(image)  # 色彩变换只应用于图像
+                image = transform(image)
             else:
                 image = transform(image)
                 if mask is not None:
-                    random.seed(seed)  # 确保 mask 变换一致
+                    random.seed(seed)
                     torch.manual_seed(seed)
                     mask = transform(mask)
 
@@ -29,11 +31,9 @@ class SynchronizedTransform:
 
 
 def build_transforms(augmentations):
-    """根据 augmentations 生成增强变换"""
     transform_list = []
 
     if augmentations.get("geometric_transforms") is not None:
-        # 解析几何变换
         for aug in augmentations.get("geometric_transforms"):
             transform_type = aug["type"]
             params = aug.get("params", {})
@@ -47,7 +47,6 @@ def build_transforms(augmentations):
             else:
                 raise ValueError(f"Unsupported geometric transformation: {transform_type}")
 
-        # 解析色彩变换
         color_params = {aug["type"]: aug["params"]["degree"] for aug in augmentations.get("color_transforms", [])}
         if color_params:
             transform_list.append(transforms.ColorJitter(
@@ -60,8 +59,6 @@ def build_transforms(augmentations):
     return SynchronizedTransform(transform_list)
 
 
-
-# 加载配置文件的函数
 def load_config(config_path):
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file)

@@ -1,0 +1,111 @@
+# device: "cuda"  # cpu/ cuda
+device: "cuda:1"
+model:
+  save_path: "params/"  # weight saving path
+
+# save path of evaluating result
+save_pic: False
+save_image_path: "saved_images"  # save the predicted pic
+
+# data loader
+data_loader:
+  batch_size: 32
+  shuffle: true
+  num_workers: 16
+
+# training setting
+setting:
+  epochs: 100
+  seed: 42
+  max_lr: 0.001
+  power: 0.9
+  min_lr: 0.00001
+  warmup_epochs: 5
+
+# dataset setting, include all the data set
+datasets:
+  isic2018:
+    size: 224
+    class_num: 1
+    in_channel: 3
+    dataset_path: "LoadData"
+    img_prefix: "ISIC_"
+    seg_prefix: "ISIC_"
+    img_suffix: ".jpg"
+    seg_suffix: "_segmentation.png"
+    
+    train_img: "isic2018/train/img"
+    train_mask: "isic2018/train/mask"
+
+    val_img: "isic2018/val/img"
+    val_mask: "isic2018/val/mask"
+
+    test_img: "isic2018/test/img"
+    test_mask: "isic2018/test/mask"
+
+    augmentations: {
+      "geometric_transforms": [
+        { "type": "Resize", "params": { "size": [224, 224] } }
+      ],
+      "color_transforms": [
+      ]
+    }
+  kvasir:
+    size: 224
+    class_num: 1
+    in_channel: 3
+    dataset_path: "LoadData"
+
+    train_img: "Kvasir-SEG/train/img"
+    train_mask: "Kvasir-SEG/train/mask"
+
+    val_img: "Kvasir-SEG/val/img"
+    val_mask: "Kvasir-SEG/val/mask"
+
+    test_img: "Kvasir-SEG/test/img"
+    test_mask: "Kvasir-SEG/test/mask"
+
+
+    augmentations: {
+      "geometric_transforms": [
+        { "type": "Resize", "params": { "size": [ 224, 224 ] } }
+      ],
+      "color_transforms": [
+      ]
+    }
+  clinicdb:
+    size: 224
+    class_num: 1
+    in_channel: 3
+    dataset_path: "LoadData"
+
+    train_img: "CVC-ClinicDB/train/img"
+    train_mask: "CVC-ClinicDB/train/mask"
+
+    val_img: "CVC-ClinicDB/val/img"
+    val_mask: "CVC-ClinicDB/val/mask"
+
+    test_img: "CVC-ClinicDB/test/img"
+    test_mask: "CVC-ClinicDB/test/mask"
+
+    augmentations: {
+      "geometric_transforms": [
+        { "type": "Resize", "params": { "size": [ 224, 224 ] } }
+      ],
+      "color_transforms": [
+      ]
+    }
+  synapse:
+    size: 224
+    class_num: 9
+    in_channel: 1
+    root_path: "LoadData/Synapse/train_npz"
+    list_dir: "LoadData/Synapse/lists_Synapse"
+
+    augmentations: {
+      "geometric_transforms": [
+        { "type": "Resize", "params": { "size": [ 224, 224 ] } }
+      ],
+      "color_transforms": [
+      ]
+    }

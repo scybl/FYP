@@ -4,7 +4,7 @@
 output.txt
 .DS_Store
 
-
+useless_code/
 saved_images/
 params/
 paper/
@@ -20,3 +20,5 @@ Kvasir-SEG/
 sessile-main-Kvasir-SEG/
 synapseCache/
 暂存/
+pretrain_model/
+ans/

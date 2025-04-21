@@ -2,26 +2,41 @@ import os
 import torch
 from torchvision.utils import save_image
 
+from Evaluate.evaluate import dice
 from LoadData.data import get_dataset
 from LoadData.utils import load_config
-from LossFunction.LearningRate import PolyWarmupScheduler
-from LossFunction.LossChoose import LossFunctionHub
-from model_defination.model_loader import load_model
+from Evaluate.LearningRate import PolyWarmupScheduler
+from Evaluate.LossChoose import LossFunctionHub
+from model.model_loader import load_model
 from torch.optim import AdamW
 
+from fvcore.nn import FlopCountAnalysis, parameter_count_table
+
+
 class Trainer:
-    def __init__(self, config_path):
+    def __init__(self, config_path, model_name, dataset_name):
         self.config = load_config(config_path)
         self.device = torch.device(self.config['device'] if torch.cuda.is_available() else "cpu")
-        self.class_num = self.config["datasets"][self.config["setting"]["dataset_name"]]["class_num"]
-        self.data_loader = get_dataset(self.config, 'train')
-        self.net = load_model(self.config, 'train').to(self.device)
+        self.class_num = self.config["datasets"][dataset_name]["class_num"]
+        self.model_name = model_name
 
-        # self.loss_hub = LossFunctionHub(loss_name="dice_ce", include_background=True, to_onehot_y=False, softmax=True) # 多分类
-        self.loss_hub = LossFunctionHub(loss_name='bce')
-        self.loss_fn = self.loss_hub.get_loss_function()
+        self.dataset_name = dataset_name
+        self.train_dataset = get_dataset(self.config, self.dataset_name, 'train')
+        self.val_dataset = get_dataset(self.config, self.dataset_name, 'val')
 
-        self.opt = AdamW(self.net.parameters(), lr=self.config["setting"]['min_lr'], betas=(0.99, 0.95)) # AdamW 比 Adam 更适合现代深度学习任务，因为：
+        self.net = load_model(self.config, model_name, dataset_name).to(self.device)
+
+        if self.class_num == 1:
+            loss_hub = LossFunctionHub(loss_name="dice_ce", include_background=False, to_onehot_y=False, softmax=False,
+                                       sigmoid=True)  # single
+        else:
+            loss_hub = LossFunctionHub(loss_name="dice_ce", include_background=True, to_onehot_y=False, softmax=True,
+                                       sigmoid=False)  # multi-classes
+
+        self.loss_fn = loss_hub.get_loss_function()
+
+        self.opt = AdamW(self.net.parameters(), lr=self.config["setting"]['min_lr'],
+                         betas=(0.99, 0.95))
         self.scheduler = PolyWarmupScheduler(
             optimizer=self.opt,
             warmup_epochs=self.config["setting"]['warmup_epochs'],
@@ -30,80 +45,120 @@ class Trainer:
             power=0.9,
             eta_min=self.config["setting"]['min_lr']
         )
-
-        self.save_model_path = os.path.join(self.config['model']["save_path"], self.config["model"]['name'])
-        self.loss_log_path = os.path.join(self.config['model']['save_path'], f"train_loss_log_{self.config['model']['name']}.csv")
+        self.save_model_path = os.path.join(self.config['model']["save_path"], model_name)
+        self.loss_log_path = os.path.join(self.config['model']['save_path'],
+                                          f"log_{model_name}_{self.dataset_name}.csv")
         self._init_log_file()
 
     def _init_log_file(self):
-        with open(self.loss_log_path, "w") as f:
-            f.write("epoch,step,train_loss\n")
+        file_exists = os.path.exists(self.loss_log_path)
+        mode = "a" if file_exists else "w"
+        with open(self.loss_log_path, mode) as f:
+            if not file_exists:
+                f.write("epoch,step,train_loss\n")
+
+    def val(self) -> float:
+        self.net.eval()  # evaluate
+        num_batches = 0
+        dice_scores = []
+
+        with torch.no_grad():
+            for i, (image, segment_image) in enumerate(self.val_dataset):
+                image, segment_image = image.to(self.device), segment_image.to(self.device)
+                out_image = torch.sigmoid(self.net(image))  # sigmoid
+
+                # Dice
+                dice_score = dice(pred=out_image, target=segment_image)
+                dice_scores.append(dice_score)
+
+                num_batches += 1
+
+        # 计算平均 Dice
+        avg_dice = sum(dice_scores) / num_batches
+        print(f"Validation Dice: {avg_dice:.6f}")
+        return avg_dice
 
     def train(self):
         epochs = 1
+        best_val = self.val()
+
         while epochs <= self.config["setting"]['epochs']:
-            for i, (image, segment_image) in enumerate(self.data_loader):
+            self.net.train()  # 确保模型处于训练模式
+            for i, (image, segment_image) in enumerate(self.train_dataset):
+                self.opt.zero_grad()
                 image, segment_image = image.to(self.device), segment_image.to(self.device)
                 out_image = self.net(image)
-                # print(f'image的大小为: f{image.size()}')
-                # print(f'mask的大小为: f{segment_image.size()}')
-                # print(f'out_img的大小为: f{out_image.size()}')
+                # print(f'The size of the image is: f{image.size()}')
+                # print(f'The size of the mask is: f{segment_image.size()}')
+                # print(f'The size of the out_img is: f{out_image.size()}')
 
                 train_loss = self.loss_fn(out_image, segment_image)
 
-                self.opt.zero_grad()
                 train_loss.backward()
                 self.opt.step()
 
-                # 保存日志
+                # save the logging
                 with open(self.loss_log_path, "a") as f:
                     f.write(f"{epochs},{i},{train_loss.item():.6f}\n")
 
-##############################################################################################
-                # 保存图像，用于可视化
-                _image = image[0]
-                _segment_image = segment_image[0]
-                _out_image = out_image[0]
-
-                _segment_image = _segment_image.repeat(3, 1, 1)  # 重复 3 次通道，大小变为 [3, 256, 256]
-                _out_image = _out_image.repeat(3, 1, 1)  # 重复 3 次通道，大小变为 [3, 256, 256]
-
-                img = torch.stack([_image, _segment_image, _out_image], dim=0)
-                save_image(img, os.path.join(self.config['save_image_path'],f"{self.config['model']['name']}_{self.config['setting']['dataset_name']}_{i}.png"))
-###############################################################################################
-
-                # 打印训练信息
                 current_lr = self.opt.param_groups[0]['lr']
-                assert current_lr == self.scheduler.get_lr(), f"不相等,检查问题current_lr:{current_lr}, scheduler_lr:{self.scheduler.get_lr()}"
                 print(f"Epoch {epochs} --- Step {i} --- Loss: {train_loss.item():.6f} --- LR: {current_lr:.6f}")
 
-            # 每个epoch保存一个模型
-            torch.save(self.net.state_dict(), f"{self.save_model_path}_{self.config['setting']['dataset_name']}_{epochs}.pth")
+            val_dice = self.val()
 
-            # 更新学习率
+            # save the best
+            if val_dice > best_val:
+                best_val = val_dice
+                torch.save(self.net.state_dict(), f"{self.save_model_path}_{self.dataset_name}_best.pth")
+                print(f"Epoch {epochs}: save the best model")
+
+            # update the lr
             self.scheduler.step()
             epochs += 1
 
-# 运行训练
+    def analyze(self, input_tensor_size):
+        """
+            Calculate the FLOPs and number of parameters of the model based on
+            the input tensor size and print the results.
+
+            Parameters:
+            input_tensor_size (tuple): Input tensor size, format (Channels, Height, Width)
+        """
+        # Construct a random tensor that matches the model input (Batch size defaults to 1)
+
+        input_tensor = torch.randn(1, *input_tensor_size).to(self.device)
+
+        flops = FlopCountAnalysis(self.net, input_tensor)
+        print("Total FLOPs:", flops.total())
+
+        print("\nParameters:")
+        print(parameter_count_table(self.net))
+
+
+# run
 if __name__ == "__main__":
-    model_config_list = [
-        # 调试完成,没有什么问题
-        # "config_train_unet_isic2018.yaml",
-        # "config_train_bnet_isic2018.yaml",
 
-        # TODO: 训练结果全黑,不知道为啥,注意已将epoch改为20
-        "config_train_unet_kvasir.yaml",
-        "config_train_bnet_kvasir.yaml",
-
-        "config_train_unet_clinicdb.yaml",
-        "config_train_bnet_clinicdb.yaml",
-
-        # "config_train_unet_synapse.yaml",
-        # "config_train_bnet_synapse.yaml",
-
+    model_hub = [
+        "duck",
+        "unetpp",
+        "bnet",
+        'unet',
+        "bnet34",
+        'unext',
+        'dga',
+        'pham'
+    ]
+    dataset_hub = [
+        'kvasir',
+        'clinicdb',
+        'isic2018',
+        # 'synapse'
     ]
 
-    for CONFIG_NAME in model_config_list:
-        CONFIG_PATH = os.path.join("configs/", CONFIG_NAME)
-        trainer = Trainer(CONFIG_PATH)
-        trainer.train()
+    train_config_path = 'configs/config.yaml'
+    for model_name in model_hub:
+        for dataset_name in dataset_hub:
+            print('-----------------')
+            trainer = Trainer(train_config_path, model_name=model_name, dataset_name=dataset_name)
+            trainer.analyze((3, 224, 224))
+            # trainer.train()

@@ -5,46 +5,44 @@ from torch.utils.data import DataLoader
 from LoadData.KvasirSEG_Dataset import KvasirSEG_Dataset
 from LoadData.Synapse_Dataset import Synapse_Dataset
 
+import logging
+
 
 class LabelProcessor:
     """
-    标签预处理器：将标签转换为指定的通道数，确保标签格式符合网络需求
+        Label preprocessor: Converts the labels to the specified number of channels,
+        ensuring that the label format meets the network requirements
     """
+
     def __init__(self, class_num=1):
         self.class_num = class_num
 
     def __call__(self, label):
         if self.class_num == 1:
-            # 二分类任务，保留单通道
+            # binary class
             if label.ndim == 3 and label.shape[0] > 1:
-                label = label[0:1, :, :]  # 转为单通道
+                label = label[0:1, :, :]
             elif label.ndim == 2:
-                label = label.unsqueeze(0)  # 添加通道维度
-            # 二值化标签，确保值在 0 和 1 之间
+                label = label.unsqueeze(0)
             label = (label > 0.5).float()
         else:
-            # 多分类任务，假设标签已经是 one-hot 编码或分类索引形式
-            # 如果是分类索引形式，直接返回
+            # Multiclass classification
             if label.ndim == 3 and label.shape[0] != self.class_num:
                 raise ValueError(f"Expected label channels {self.class_num}, but got {label.shape[0]}")
         return label
 
 
-def get_dataset(config, mode):
+def get_dataset(config, dataset_name, mode):
     """
-    通用数据加载器函数，用于获取训练或测试数据加载器。
+        General data loader function to get the training or testing data loader.
 
-    :param config: 配置字典，包含数据集和加载器的配置信息。
-    :param mode: 数据模式，"train" 或 "test"，决定加载训练或测试数据。
-    :return: 数据加载器 (DataLoader) 对象。
+        :param config: Configuration dictionary containing dataset and loader configuration information.
+        :param mode: Data mode, "train" or "test", determines whether to load training or testing data.
+        :return: DataLoader object.
     """
-    if mode not in ["train", "test"]:
-        raise ValueError(f"Unsupported mode '{mode}'. Use 'train' or 'test'.")
+    if mode not in ["train", "test", "val"]:
+        raise ValueError(f"Unsupported mode '{mode}'. Use 'train' or 'test'. or val")
 
-    # 选择不同模式下的 dataset_name
-    dataset_name = config["setting"]["dataset_name"] if mode == "train" else config["setting"]["dataset_name"]
-
-    # 如果数据集是 ISIC2018，加载特定数据集
     if dataset_name.lower() == "isic2018":
         dataset_class = ISIC2018_DataSet
     elif dataset_name.lower() == 'kvasir':
@@ -63,10 +61,8 @@ def get_dataset(config, mode):
 
     print(f"Loading {mode} dataset: {dataset_name}, data augmentations has been loaded")
 
-    # 初始化数据集
-    dataset = dataset_class(dataset_config)
-
-    print(f"{dataset.__len__()}")
+    # init dataset
+    dataset = dataset_class(dataset_config, mode)
 
     data_all = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, num_workers=num_workers)
 
