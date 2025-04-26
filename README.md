@@ -1,6 +1,6 @@
-# FYPNet
+# FYP-Net
 
-FYPNet is my university graduation project. It is based on the current hybrid attention mechanism, where I designed the PHAM module by combining channel attention and spatial attention in a parallel manner to enhance the model’s segmentation performance.
+FYP-Net is my university graduation project. It is based on the current hybrid attention mechanism, where I designed the PHAM module by combining channel attention and spatial attention in a parallel manner to enhance the model's segmentation performance.
 
 # Architecture
 Below is the architecture of the model I designed, which consists of several modules: 
@@ -100,11 +100,14 @@ fi
 ## Dataset Preparation
 In our training framework, we have prepared three datasets: [ISIC2018](https://challenge.isic-archive.com/landing/2018/), [CVC-ClinicDB](https://polyp.grand-challenge.org/CVCClinicDB/) and [Kvasir-SEG](https://datasets.simula.no/kvasir-seg/). You can click the links to visit the official websites and download the datasets.
 
+If you wish to download the dataset we have prepared, you can click the link below to configure it directly:[Google Drive](https://drive.google.com/drive/folders/1j1v-AHl-N4-CkMNwDtpf3QSvCdoipxuX?usp=drive_link)
+
 ## Dataset Path
 If you need to change the path in the project after configuring the path, you need to modify it
-change the [config.yaml](config/config.yaml) file to control the dataset path
+change the [config.yaml](configs/config.yaml) file to control the dataset path
 
-After downloading the dataset, we need to split it into three parts: train, val, and test. Then change the dataset setting in [config.yaml](config/config.yaml).
+After downloading the dataset, we need to split it into three parts: train, val, and test. Then change the dataset setting in [config.yaml](configs/config.yaml).
+
 
 ## Train and Test
 Because of the complete setup, you only need to run the following code to train and test
@@ -112,4 +115,5 @@ Because of the complete setup, you only need to run the following code to train 
 python train.py
 python test.py
 ```
-https://drive.google.com/drive/folders/1j1v-AHl-N4-CkMNwDtpf3QSvCdoipxuX?usp=drive_link
+
+If you want to use the pre-trained model we have prepared, you can obtain it through the link below: [Google Drive](https://drive.google.com/drive/folders/1He9Zh5Nofg8S3FAS3bItH1X_2DRTeLVX?usp=sharing)
