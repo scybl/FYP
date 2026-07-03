@@ -1,14 +1,11 @@
-import os
 import torch
 import numpy as np
 import random
-from torchvision.utils import save_image
 
-from Evaluate.evaluate import dice, miou, binary_accuracy, binary_recall, binary_precision, binary_jaccard_index
+from Evaluate.evaluate import dice, miou, binary_accuracy, binary_recall, binary_precision
 from LoadData.data import get_dataset
 from LoadData.utils import load_config
-from Evaluate.LossChoose import LossFunctionHub
-from model.model_loader import load_model
+from model.model_loader import load_model, resolve_device
 
 
 # import warnings
@@ -19,7 +16,7 @@ class Tester:
     def __init__(self, config_path, _model_name, _dataset_name):
         # config setting
         self.config = load_config(config_path)
-        self.device = torch.device(self.config['device'] if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(resolve_device(self.config.get('device', "cpu")))
         self.class_num = self.config["datasets"][_dataset_name]["class_num"]
         self.model_name = _model_name
         self.dataset_name = _dataset_name
@@ -29,7 +26,7 @@ class Tester:
 
         # Load the model and move it to the device.
         # Note that special settings may be required during testing, such as adjusting the batch_size.
-        self.net = load_model(self.config, _model_name, _dataset_name).to(self.device)
+        self.net = load_model(self.config, _model_name, _dataset_name, load_weights=True).to(self.device)
 
         self.save_image_path = self.config['save_image_path']
 
@@ -47,6 +44,10 @@ class Tester:
             for i, (image, segment_image) in enumerate(self.test_dataset):
                 image, segment_image = image.to(self.device), segment_image.to(self.device)
                 out_image = self.net(image)
+                if self.class_num == 1:
+                    out_image = torch.sigmoid(out_image)
+                else:
+                    out_image = torch.softmax(out_image, dim=1)
 
                 dice_scores.append(dice(pred=out_image, target=segment_image))
                 miou_scores.append(miou(pred=out_image, target=segment_image))
@@ -73,6 +74,9 @@ class Tester:
             # f"{self.model_name}_{self.dataset_name}_{i}.png")
             # save_image(img, save_path)
             ####################################################################################
+
+        if num_batches == 0:
+            raise RuntimeError("Test dataset is empty. Please check the configured test path.")
 
         _dice = sum(dice_scores) / num_batches
         _miou = sum(miou_scores) / num_batches

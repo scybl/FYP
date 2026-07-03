@@ -1,22 +1,18 @@
 import os
 import torch
-from torchvision.utils import save_image
 
 from Evaluate.evaluate import dice
 from LoadData.data import get_dataset
 from LoadData.utils import load_config
 from Evaluate.LearningRate import PolyWarmupScheduler
-from Evaluate.LossChoose import LossFunctionHub
-from model.model_loader import load_model
+from model.model_loader import load_model, resolve_device
 from torch.optim import AdamW
-
-from fvcore.nn import FlopCountAnalysis, parameter_count_table
 
 
 class Trainer:
     def __init__(self, config_path, model_name, dataset_name):
         self.config = load_config(config_path)
-        self.device = torch.device(self.config['device'] if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(resolve_device(self.config.get('device', "cpu")))
         self.class_num = self.config["datasets"][dataset_name]["class_num"]
         self.model_name = model_name
 
@@ -24,7 +20,9 @@ class Trainer:
         self.train_dataset = get_dataset(self.config, self.dataset_name, 'train')
         self.val_dataset = get_dataset(self.config, self.dataset_name, 'val')
 
-        self.net = load_model(self.config, model_name, dataset_name).to(self.device)
+        self.net = load_model(self.config, model_name, dataset_name, load_weights=False).to(self.device)
+
+        from Evaluate.LossChoose import LossFunctionHub
 
         if self.class_num == 1:
             loss_hub = LossFunctionHub(loss_name="dice_ce", include_background=False, to_onehot_y=False, softmax=False,
@@ -45,6 +43,7 @@ class Trainer:
             power=0.9,
             eta_min=self.config["setting"]['min_lr']
         )
+        os.makedirs(self.config['model']["save_path"], exist_ok=True)
         self.save_model_path = os.path.join(self.config['model']["save_path"], model_name)
         self.loss_log_path = os.path.join(self.config['model']['save_path'],
                                           f"log_{model_name}_{self.dataset_name}.csv")
@@ -65,7 +64,11 @@ class Trainer:
         with torch.no_grad():
             for i, (image, segment_image) in enumerate(self.val_dataset):
                 image, segment_image = image.to(self.device), segment_image.to(self.device)
-                out_image = torch.sigmoid(self.net(image))  # sigmoid
+                out_image = self.net(image)
+                if self.class_num == 1:
+                    out_image = torch.sigmoid(out_image)  # sigmoid
+                else:
+                    out_image = torch.softmax(out_image, dim=1)
 
                 # Dice
                 dice_score = dice(pred=out_image, target=segment_image)
@@ -74,6 +77,9 @@ class Trainer:
                 num_batches += 1
 
         # 计算平均 Dice
+        if num_batches == 0:
+            raise RuntimeError("Validation dataset is empty. Please check the configured validation path.")
+
         avg_dice = sum(dice_scores) / num_batches
         print(f"Validation Dice: {avg_dice:.6f}")
         return avg_dice
@@ -125,6 +131,7 @@ class Trainer:
             input_tensor_size (tuple): Input tensor size, format (Channels, Height, Width)
         """
         # Construct a random tensor that matches the model input (Batch size defaults to 1)
+        from fvcore.nn import FlopCountAnalysis, parameter_count_table
 
         input_tensor = torch.randn(1, *input_tensor_size).to(self.device)
 

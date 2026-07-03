@@ -1,9 +1,9 @@
-import torch.utils.data as data
-from PIL import Image
 import os
+from PIL import Image
+import torch.utils.data as data
 import torchvision.transforms as transforms
 
-from LoadData.utils import build_transforms
+from LoadData.utils import build_transforms, get_split_paths, list_dataset_files
 
 
 class KvasirSEG_Dataset(data.Dataset):
@@ -12,19 +12,10 @@ class KvasirSEG_Dataset(data.Dataset):
         self.config = config
         self.class_num = config["class_num"]
         self.dataset_path = self.config["dataset_path"]
+        self.img_path, self.mask_path = get_split_paths(self.config, mode)
 
-        if mode == "train":
-            self.img_path = os.path.join(self.dataset_path, self.config["train_img"])
-            self.mask_path = os.path.join(self.dataset_path, self.config["train_mask"])
-        elif mode == "val":
-            self.img_path = os.path.join(self.dataset_path, self.config["val_img"])
-            self.mask_path = os.path.join(self.dataset_path, self.config["val_mask"])
-        elif mode == 'test':
-            self.img_path = os.path.join(self.dataset_path, self.config["test_img"])
-            self.mask_path = os.path.join(self.dataset_path, self.config["test_mask"])
-
-        self.img_list = os.listdir(self.img_path)
-        self.mask_list = os.listdir(self.mask_path)
+        self.img_list = list_dataset_files(self.img_path)
+        self.mask_list = list_dataset_files(self.mask_path)
 
         self.transforms = build_transforms(config['augmentations'])
 

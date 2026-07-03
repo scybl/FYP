@@ -1,11 +1,9 @@
-from LoadData.ClinicDB_Dataset import ClinicDB_Dataset
-from LoadData.ISIC2018_Dataset import ISIC2018_DataSet
 from torch.utils.data import DataLoader
 
+from LoadData.ClinicDB_Dataset import ClinicDB_Dataset
+from LoadData.ISIC2018_Dataset import ISIC2018_DataSet
 from LoadData.KvasirSEG_Dataset import KvasirSEG_Dataset
 from LoadData.Synapse_Dataset import Synapse_Dataset
-
-import logging
 
 
 class LabelProcessor:
@@ -56,7 +54,7 @@ def get_dataset(config, dataset_name, mode):
 
     dataset_config = config["datasets"][dataset_name]
     batch_size = config["data_loader"]["batch_size"]
-    shuffle = config["data_loader"]["shuffle"]
+    shuffle = config["data_loader"]["shuffle"] if mode == "train" else False
     num_workers = config["data_loader"]["num_workers"]
 
     print(f"Loading {mode} dataset: {dataset_name}, data augmentations has been loaded")

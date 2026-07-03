@@ -16,13 +16,16 @@ class PolyWarmupScheduler:
         self.power = power
         self.eta_min = eta_min
         self.current_epoch = 0
-        self.poly_factor = (1 - (self.current_epoch - self.warmup_epochs) / (self.total_epochs - self.warmup_epochs)) ** self.power
 
     def step(self):
         if self.current_epoch < self.warmup_epochs:
-            lr = self.eta_min + (self.initial_lr - self.eta_min) * (self.current_epoch / self.warmup_epochs)
+            warmup_epochs = max(self.warmup_epochs, 1)
+            lr = self.eta_min + (self.initial_lr - self.eta_min) * (self.current_epoch / warmup_epochs)
         else:
-            lr = (self.initial_lr - self.eta_min) * self.poly_factor + self.eta_min
+            decay_epochs = max(self.total_epochs - self.warmup_epochs, 1)
+            progress = min((self.current_epoch - self.warmup_epochs) / decay_epochs, 1.0)
+            poly_factor = (1 - progress) ** self.power
+            lr = (self.initial_lr - self.eta_min) * poly_factor + self.eta_min
 
         for param_group in self.optimizer.param_groups:
             param_group['lr'] = lr

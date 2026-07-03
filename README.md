@@ -30,9 +30,9 @@ class="center">
 </p>
 
 
-# FlameWork
+# Framework
 
-Below is the table of contents of my project, along with the associated comments
+Below is the table of contents of my project, along with the associated comments.
 
 ```markdown
 FYP/
@@ -48,7 +48,10 @@ FYP/
     ├── LoadData             # Scripts for loading and preprocessing data.
         ├── data.py          # The data loading controller, which controls whether all datasets are loaded or not
         └── <Other code..>   # Other code, containing different dataset loading classes
+    ├── scripts              # Small project maintenance scripts.
+    ├── tests                # Synthetic tests, no real dataset required.
     ├── params               # The training weights save the path.
+    ├── main.py              # Unified command-line entrance.
     ├── test_model.py        # Script for testing the model.
     ├── todoList.py          # All of my tasks during the development of the project.
     ├── train_model.py       # Script for training the model.
@@ -108,12 +111,48 @@ change the [config.yaml](configs/config.yaml) file to control the dataset path
 
 After downloading the dataset, we need to split it into three parts: train, val, and test. Then change the dataset setting in [config.yaml](configs/config.yaml).
 
+The real datasets and saved weights are intentionally not stored in this repository. This keeps the code clean and avoids pushing large files. The paths are ignored by `.gitignore`, and the code tests use synthetic samples instead.
+
+You can also use [config.example.yaml](configs/config.example.yaml) as a clean starting point for another machine.
+
 
 ## Train and Test
-Because of the complete setup, you only need to run the following code to train and test
+Because of the complete setup, you can use the unified entrance:
+
 ```shell
-python train.py
-python test.py
+python main.py list
+python main.py train --model bnet --dataset isic2018
+python main.py test --model bnet34 --dataset isic2018
+```
+
+The original experiment scripts are still available:
+
+```shell
+python train_model.py
+python test_model.py
 ```
 
 If you want to use the pre-trained model we have prepared, you can obtain it through the link below: [Google Drive](https://drive.google.com/drive/folders/1He9Zh5Nofg8S3FAS3bItH1X_2DRTeLVX?usp=sharing)
+
+If you want the ResNet encoder in `bnet34` to download ImageNet-pretrained weights, set this option in [config.yaml](configs/config.yaml):
+
+```yaml
+model:
+  pretrained_encoder: true
+```
+
+By default it is set to `false`, so the project can be checked offline without downloading weights.
+
+## Test Without Dataset
+
+The repository includes synthetic tests for the data loaders, segmentation metrics, learning-rate scheduler, and core model loading. They do not require ISIC2018, CVC-ClinicDB, Kvasir-SEG, Synapse, or saved `.pth` weights.
+
+```shell
+python -m unittest discover -s tests
+```
+
+Or run the full lightweight project check:
+
+```shell
+python scripts/check_project.py
+```

@@ -1,7 +1,10 @@
+import os
 import yaml
 import random
 import torch
 import torchvision.transforms as transforms
+import torchvision.transforms.functional as TF
+from torchvision.transforms import InterpolationMode
 
 
 class SynchronizedTransform:
@@ -13,24 +16,27 @@ class SynchronizedTransform:
         self.transforms = transforms_list
 
     def __call__(self, image, mask=None):
-        seed = random.randint(0, 2 ** 32)  # random seed
-        random.seed(seed)
-        torch.manual_seed(seed)
-
         for transform in self.transforms:
             if isinstance(transform, transforms.ColorJitter):
                 image = transform(image)
             else:
+                seed = random.randint(0, 2 ** 32)  # random seed
+                random.seed(seed)
+                torch.manual_seed(seed)
                 image = transform(image)
                 if mask is not None:
                     random.seed(seed)
                     torch.manual_seed(seed)
-                    mask = transform(mask)
+                    if isinstance(transform, transforms.Resize):
+                        mask = TF.resize(mask, transform.size, InterpolationMode.NEAREST)
+                    else:
+                        mask = transform(mask)
 
         return image, mask
 
 
 def build_transforms(augmentations):
+    augmentations = augmentations or {}
     transform_list = []
 
     if augmentations.get("geometric_transforms") is not None:
@@ -47,14 +53,17 @@ def build_transforms(augmentations):
             else:
                 raise ValueError(f"Unsupported geometric transformation: {transform_type}")
 
-        color_params = {aug["type"]: aug["params"]["degree"] for aug in augmentations.get("color_transforms", [])}
-        if color_params:
-            transform_list.append(transforms.ColorJitter(
-                brightness=color_params.get("brightness"),
-                contrast=color_params.get("contrast"),
-                saturation=color_params.get("saturation"),
-                hue=color_params.get("hue")
-            ))
+    color_params = {
+        aug["type"]: aug.get("params", {}).get("value", aug.get("params", {}).get("degree"))
+        for aug in augmentations.get("color_transforms", [])
+    }
+    if color_params:
+        transform_list.append(transforms.ColorJitter(
+            brightness=color_params.get("brightness"),
+            contrast=color_params.get("contrast"),
+            saturation=color_params.get("saturation"),
+            hue=color_params.get("hue")
+        ))
 
     return SynchronizedTransform(transform_list)
 
@@ -63,3 +72,26 @@ def load_config(config_path):
     with open(config_path, 'r') as file:
         config = yaml.safe_load(file)
     return config
+
+
+def get_split_paths(config, mode):
+    split_keys = {
+        "train": ("train_img", "train_mask"),
+        "val": ("val_img", "val_mask"),
+        "test": ("test_img", "test_mask"),
+    }
+    if mode not in split_keys:
+        raise ValueError(f"Unsupported mode '{mode}'. Use 'train', 'val', or 'test'.")
+
+    img_key, mask_key = split_keys[mode]
+    dataset_path = config.get("dataset_path", "")
+    return os.path.join(dataset_path, config[img_key]), os.path.join(dataset_path, config[mask_key])
+
+
+def list_dataset_files(path):
+    if not os.path.isdir(path):
+        raise FileNotFoundError(
+            f"Dataset path does not exist: {path}. "
+            "Please download the dataset or use the synthetic tests for code verification."
+        )
+    return sorted(name for name in os.listdir(path) if not name.startswith("."))
